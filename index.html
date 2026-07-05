@@ -44,7 +44,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 space-y-4 flex flex-col lg:col-span-2">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่การปฏิบัติ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-l font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-2 items-center">
                     <button onclick="setPenColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white"></button>
                     <button onclick="setPenColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500"></button>
@@ -52,7 +52,7 @@
                     <button onclick="setPenColor('#ffffff')" class="w-6 h-6 rounded-full bg-white"></button>
                     <button onclick="toggleMapInteraction()" id="btn-mode" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500 ml-2">โหมด: ✍️ วาดเส้น</button>
                     <button onclick="clearCanvas()" class="text-xs bg-gray-700 px-2 py-1 rounded font-bold hover:bg-gray-600">ล้างเส้นวาด</button>
-                    <button onclick="requestCurrentLocation()" class="text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 ดึงพิกัดจริง</button>
+                    <button onclick="requestCurrentLocation()" class="text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 ดึงพิกัด</button>
                 </div>
             </div>
 
@@ -62,8 +62,8 @@
                 <button onclick="spawnTacticalIcon('🪜', 'รถกระเช้า')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🪜 รถกระเช้า</button>
                 <button onclick="spawnTacticalIcon('🚑', 'รถพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚑 รถพยาบาล</button>
                 <button onclick="spawnTacticalIcon('🔥', 'เปลวไฟ')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 เปลวไฟ</button>
-                <button onclick="spawnTacticalIcon('⛺', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⛺ กองอำนวยการ</button>
-                <button onclick="spawnTacticalIcon('🏥', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏥 จุดพยาบาล</button>
+                <button onclick="spawnTacticalIcon('⛺', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⛺ ICP</button>
+                <button onclick="spawnTacticalIcon('🏥', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏥 Triage Zone</button>
             </div>
             
             <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
@@ -72,21 +72,21 @@
             </div>
             
             <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="incident-name" placeholder="ชื่อเหตุการณ์" class="bg-gray-800 text-sm p-2 rounded border border-gray-700 font-bold text-white focus:outline-none" value="เหตุเพลิงไหม้โคราช">
-                <input type="text" id="ic-name" placeholder="ผู้บัญชาการ (IC)" class="bg-gray-800 text-sm p-2 rounded border border-gray-700 font-bold text-white focus:outline-none" value="ผบ.เหตุการณ์ 01">
+                <input type="text" id="incident-name" placeholder="ชื่อเหตุการณ์" class="bg-gray-800 text-sm p-2 rounded border border-gray-700 font-bold text-white focus:outline-none" value="เพลิงไหม้">
+                <input type="text" id="ic-name" placeholder="ผู้บัญชาการ (IC)" class="bg-gray-800 text-sm p-2 rounded border border-gray-700 font-bold text-white focus:outline-none" value="ชื่อผู้บัญชาการ">
             </div>
         </div>
 
         <div class="space-y-4 flex flex-col">
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <h2 class="text-lg font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร</h2>
+                    <h2 class="text-l font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร</h2>
                     <button onclick="addICSItem()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วย</button>
                 </div>
                 <div id="ics-list" class="space-y-2 max-h-[180px] overflow-y-auto pr-1">
                     <div class="ics-item bg-blue-950/40 p-2 rounded border border-blue-900 relative group">
                         <input type="text" value="พื้นที่ปฏิบัติการ (DIV.A)" class="bg-transparent font-bold text-blue-400 text-xs block w-full focus:outline-none">
-                        <input type="text" value="รถดับเพลิงนครราชสีมา" class="bg-transparent text-sm w-full focus:outline-none text-gray-300">
+                        <input type="text" value="รถดับเพลิง" class="bg-transparent text-sm w-full focus:outline-none text-gray-300">
                     </div>
                 </div>
             </div>
@@ -223,7 +223,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude; const lon = position.coords.longitude;
-                        map.setView([lat, lon], 17); currentMarker.setLatLng([lat, lon]).bindPopup(`📍 พิกัดปฏิบัติงานจริง`).openPopup();
+                        map.setView([lat, lon], 17); currentMarker.setLatLng([lat, lon]).bindPopup(`📍 พิกัดปฏิบัติงาน`).openPopup();
                         statusText.textContent = "✅ GPS พร้อมใช้งาน"; statusText.className = "text-xs text-green-400 font-bold";
                     },
                     () => { statusText.textContent = "❌ ใช้พิกัดเริ่มต้นแทน"; statusText.className = "text-xs text-red-400 font-bold"; },
@@ -271,7 +271,7 @@
         function addSCBARow() {
             const tbody = document.getElementById('scba-rows'); const rowId = "scba_" + Date.now(); const row = document.createElement('tr');
             row.id = rowId; row.className = "hover:bg-gray-800/50 transition";
-            row.innerHTML = `<td class="p-2"><input type="text" class="team-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ทีม"></td><td class="p-2"><input type="text" class="name-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อ/รหัส"></td><td class="p-2"><input type="number" class="bar-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-center font-bold text-yellow-400" value="300"></td><td class="p-2 font-mono text-center time-in">--:--</td><td class="p-2 font-mono text-center text-orange-400 whistle-time">--:--</td><td class="p-2 font-mono text-center text-red-500 exit-time">--:--</td><td class="p-2 text-center"><button onclick="startSCBA('${rowId}', this)" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold">START</button><button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 ml-2">✕</button></td>`;
+            row.innerHTML = `<td class="p-2"><input type="text" class="team-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อทีม"></td><td class="p-2"><input type="text" class="name-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อ/รหัส"></td><td class="p-2"><input type="number" class="bar-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-center font-bold text-yellow-400" value="300"></td><td class="p-2 font-mono text-center time-in">--:--</td><td class="p-2 font-mono text-center text-orange-400 whistle-time">--:--</td><td class="p-2 font-mono text-center text-red-500 exit-time">--:--</td><td class="p-2 text-center"><button onclick="startSCBA('${rowId}', this)" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold">START</button><button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 ml-2">✕</button></td>`;
             tbody.appendChild(row);
         }
 
@@ -333,7 +333,7 @@
                 body: JSON.stringify(payloadData)
             })
             .then(() => {
-                alert("✅ ส่งคำสั่งบันทึกข้อมูลสำเร็จ! โปรดตรวจสอบใน Google Sheets ของคุณ");
+                alert("✅ ส่งคำสั่งบันทึกข้อมูลสำเร็จ!");
             })
             .catch(error => {
                 console.error('Error:', error);
