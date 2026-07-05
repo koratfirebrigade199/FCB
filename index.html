@@ -95,7 +95,7 @@
         <!-- ฝั่งแผนที่และไอคอนยุทธวิธี -->
         <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 space-y-4 flex flex-col lg:col-span-2">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h2 class="text-xl font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่การปฏิบัติ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-l font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-2 items-center">
                     <button onclick="setPenColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white"></button>
                     <button onclick="setPenColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500"></button>
@@ -109,13 +109,13 @@
 
             <!-- แถบเลือกไอคอนยุทธวิธีสำหรับกดเพิ่มลงในแผนที่ -->
             <div class="bg-gray-950 p-2 rounded border border-gray-800 flex items-center space-x-2 overflow-x-auto">
-                <span class="text-xs font-bold text-gray-400 whitespace-nowrap">➕ เพิ่มไอคอนยุทธวิธี:</span>
+                <span class="text-xs font-bold text-gray-400 whitespace-nowrap">➕ เพิ่มไอคอน:</span>
                 <button onclick="spawnTacticalIcon('🚒', 'รถดับเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🚒 รถดับเพลิง</button>
-                <button onclick="spawnTacticalIcon('🪜', 'รถบันไดกระเช้า')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🪜 รถกระเช้า</button>
+                <button onclick="spawnTacticalIcon('🪜', 'รถบันได')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🪜 รถกระเช้า</button>
                 <button onclick="spawnTacticalIcon('🚑', 'รถพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🚑 รถพยาบาล</button>
-                <button onclick="spawnTacticalIcon('🔥', 'จุดแนวเปลวไฟ')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🔥 เปลวไฟ</button>
-                <button onclick="spawnTacticalIcon('⛺', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">⛺ กองอำนวยการ</button>
-                <button onclick="spawnTacticalIcon('🏥', 'จุดคัดแยกพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🏥 จุดพยาบาล</button>
+                <button onclick="spawnTacticalIcon('🔥', 'เพลิงไหม้')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🔥 เปลวไฟ</button>
+                <button onclick="spawnTacticalIcon('⛺', 'ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">⛺ กองอำนวยการ</button>
+                <button onclick="spawnTacticalIcon('🏥', 'Triage')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded flex items-center gap-1">🏥 จุดพยาบาล</button>
             </div>
             
             <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
@@ -133,7 +133,7 @@
         <div class="space-y-4 flex flex-col">
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <h2 class="text-lg font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร</h2>
+                    <h2 class="text-xl font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร</h2>
                     <button onclick="addICSItem()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วย</button>
                 </div>
                 <div id="ics-list" class="space-y-2 max-h-[180px] overflow-y-auto pr-1">
@@ -146,9 +146,9 @@
             </div>
 
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800">
-                <h2 class="text-xl font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">✔️ รายการตรวจสอบแผนปฏิบัติ SOP.</h2>
+                <h2 class="text-m font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">✔️ รายการตรวจสอบแผนปฏิบัติ SOP.</h2>
                 <button onclick="openChecklistModal()" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black py-3 rounded shadow-lg text-center tracking-wide transition duration-150">
-                    📋 เปิดรายการแผนปฏิบัติ SOP. (SOP. Checklist)
+                    📋 แผนปฏิบัติ SOP Checklist
                 </button>
             </div>
 
@@ -346,7 +346,7 @@
 
                         map.setView([lat, lon], 17);
                         currentMarker.setLatLng([lat, lon]);
-                        currentMarker.bindPopup(`<b>📍 จุดเกิดเหตุปัจจุบัน</b><br>พิกัด: ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>ความแม่นยำ: ±${Math.round(accuracy)} ม.`).openPopup();
+                        currentMarker.bindPopup(`<b>📍 จุดเกิดเหตุ</b><br>พิกัด: ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>ความแม่นยำ: ±${Math.round(accuracy)} ม.`).openPopup();
                         
                         statusText.textContent = "✅ เชื่อมต่อ GPS สำเร็จ";
                         statusText.className = "text-xs text-green-400 font-bold";
