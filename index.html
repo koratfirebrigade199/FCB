@@ -29,7 +29,7 @@
             <div class="bg-black p-1 rounded-full text-xl w-10 h-10 flex items-center justify-center shadow">🚨</div>
             <div>
                 <h1 class="text-xl font-black tracking-wide uppercase neon-text-white">Fire Command Board - Korat City Fire Brigade</h1>
-                <p class="text-s font-bold text-yellow-200">📅 งานศูนย์ป้องกันและบรรเทาสาธารณภัย เทศบาลนครนครราชสีมา</p>
+                <p class="text-s font-bold text-yellow-200">งานศูนย์ป้องกันและบรรเทาสาธารณภัย เทศบาลนครนครราชสีมา</p>
             </div>
         </div>
         <div class="text-right flex items-center space-x-6">
@@ -47,25 +47,29 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 space-y-4 flex flex-col lg:col-span-2">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h2 class="text-m font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ยุทธวิธี <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-m font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-2 items-center">
                     <button onclick="setPenColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white" title="สีแดง"></button>
                     <button onclick="setPenColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500" title="สีน้ำเงิน"></button>
                     <button onclick="setPenColor('#22c55e')" class="w-6 h-6 rounded-full bg-green-500" title="สีเขียว"></button>
-                    <button onclick="toggleMapInteraction()" id="btn-mode" class="text-xs bg-gray-700 px-2 py-1 rounded font-bold hover:bg-gray-600 ml-2">โหมด: 🗺️ เลื่อนแผนที่</button>
+                    <button onclick="toggleMapInteraction()" id="btn-mode" class="text-xs bg-gray-700 px-2 py-1 rounded font-bold hover:bg-gray-600 ml-2">🗺️ เลื่อนแผนที่</button>
                     <button onclick="undoLastLine()" class="text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
                     <button onclick="clearAllLines()" class="text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้นทั้งหมด</button>
-                    <button onclick="requestCurrentLocation()" class="text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 ดึงพิกัด</button>
+                    <button onclick="requestCurrentLocation()" class="text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 ดึงพิกัด GPS</button>
                 </div>
             </div>
 
             <div class="bg-gray-950 p-2 rounded border border-gray-800 flex items-center space-x-2 overflow-x-auto">
-                <span class="text-xs font-bold text-gray-400 whitespace-nowrap">➕ เพิ่มไอคอนเชิงยุทธวิธี:</span>
+                <span class="text-xs font-bold text-gray-400 whitespace-nowrap">➕ เพิ่มไอคอน:</span>
                 <button onclick="spawnTacticalIcon('🚒', 'รถดับเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚒 รถดับเพลิง</button>
                 <button onclick="spawnTacticalIcon('🪜', 'รถกระเช้า')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🪜 รถกระเช้า</button>
                 <button onclick="spawnTacticalIcon('🚑', 'รถพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚑 รถพยาบาล</button>
-                <button onclick="spawnTacticalIcon('🔥', 'จุดต้นเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 เปลวไฟ</button>
-                <button onclick="spawnTacticalIcon('⛺', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⛺ ICP</button>
+                <button onclick="spawnTacticalIcon('🔥', 'จุดต้นเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 เพลิงไหม้</button>
+                <button onclick="spawnTacticalIcon('🏠', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏠 ICP</button>
+                <button onclick="spawnTacticalIcon('⚠️', 'พื้นที่อันตราย')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⚠️ พื้นที่อันตราย</button>
+                <button onclick="spawnTacticalIcon('➕', 'Triage zone')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">➕ Triage Zone</button>
+                <button onclick="spawnTacticalIcon('📥', 'Staging Area')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">📥 Staging Area</button>
+                <button onclick="spawnTacticalIcon('👥', 'ศูนย์พักพิงชั่วคราว')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">👥 ศูนย์พักพิงชั่วคราว</button>
             </div>
             
             <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
@@ -81,7 +85,7 @@
         <div class="space-y-4 flex flex-col">
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <h2 class="text-l font-bold text-yellow-400">🚒 จัดกำลังหน่วยงาน (Resource)</h2>
+                    <h2 class="text-l font-bold text-yellow-400">🚒 ทรัพยากร (Check-in)</h2>
                     <button onclick="addResourceRow()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
                 </div>
                 <div id="resource-list" class="space-y-3 max-h-[380px] overflow-y-auto pr-1 flex flex-col">
@@ -89,7 +93,7 @@
             </div>
 
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800">
-                <h2 class="text-xl font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">✔️ แผนปฏิบัติ SOP.</h2>
+                <h2 class="text-xl font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">✔️ แผนปฏิบัติการ SOP.</h2>
                 <button onclick="openChecklistModal()" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-black py-3 rounded shadow-lg text-center">📋 เปิดรายการตรวจสอบ SOP.</button>
             </div>
 
@@ -107,7 +111,7 @@
         <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
             <h2 class="text-lg font-bold text-red-400">𫫇 SCBA ENTRY CONTROL BOARD</h2>
             <div class="flex gap-2">
-                <button onclick="saveAllToGoogleSheet()" class="bg-amber-500 hover:bg-amber-400 text-black font-black px-4 py-1 rounded text-sm shadow transition animate-pulse">💾 บันทึกข้อมูลลง SCBA_Log</button>
+                <button onclick="saveAllToGoogleSheet()" class="bg-amber-500 hover:bg-amber-400 text-black font-black px-4 py-1 rounded text-sm shadow transition animate-pulse">💾 บันทึกข้อมูล</button>
                 <button onclick="addSCBARow()" class="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-1 rounded text-sm transition">+ เพิ่มชื่อนักดับเพลิง</button>
             </div>
         </div>
@@ -139,13 +143,15 @@
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch1" class="w-5 h-5 text-red-600"> <span class="font-bold">Size-Up พื้นที่ปฏิบัติ</span></label>
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch2" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดตั้ง ICP</span></label>
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">ตัดกระแสไฟฟ้า</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">รถดับเพลิงเข้าแหล่งน้ำ+Hydrant</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดทีม RIT</span></label>
                 
                 <div class="pt-2">
-                    <label class="block text-xs font-bold text-gray-400 mb-1">📝 ข้อมูล/รายละเอียดเพิ่มเติมหน้างาน:</label>
-                    <textarea id="sop-custom-notes" rows="3" placeholder="กรอกหมายเหตุ หรือแผนปฏิบัติการเพิ่มเติม..." class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400"></textarea>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">📝 ข้อมูล/รายละเอียดเพิ่มเติม:</label>
+                    <textarea id="sop-custom-notes" rows="3" placeholder="กรอกแผนปฏิบัติการเพิ่มเติม..." class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400"></textarea>
                 </div>
             </div>
-            <button onclick="saveSOPToGoogleSheet()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-2 rounded shadow-md">🎯 บันทึกแผนลงหน้า SOP</button>
+            <button onclick="saveSOPToGoogleSheet()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-2 rounded shadow-md">🎯 บันทึกแผน SOP</button>
         </div>
     </div>
 
@@ -260,7 +266,7 @@
             const defaultCoords = [14.9742, 102.0978];
             map = L.map('live-map').setView(defaultCoords, 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('ศูนย์กลางกองอำนวยการ ICP').openPopup();
+            currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             requestCurrentLocation();
 
             // อีเวนต์ดักจับการลากนิ้ว/เมาส์วาดลงบนแผนที่โดยตรง
@@ -349,7 +355,7 @@
             div.className = "bg-gray-800 p-3 rounded border border-gray-700 space-y-2 relative";
             div.innerHTML = `
                 <div class="flex justify-between items-center border-b border-gray-700 pb-1">
-                    <span class="text-xs font-black text-amber-400">📋 กรอกข้อมูลหน่วยสนับสนุน</span>
+                    <span class="text-xs font-black text-amber-400">📋 ข้อมูลหน่วยงาน</span>
                     <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500 font-bold">✕</button>
                 </div>
                 <div class="grid grid-cols-1 gap-1.5 text-xs text-black">
@@ -357,11 +363,11 @@
                     <input type="text" placeholder="2. ผู้ควบคุม (ชื่อ-สกุล)" class="r-commander p-1 rounded bg-gray-950 text-white border border-gray-700">
                     <input type="text" placeholder="3. ข้อมูลประสานงาน (โทร./รหัสวิทยุ)" class="r-contact p-1 rounded bg-gray-950 text-white border border-gray-700">
                     <input type="number" placeholder="4. จำนวน จนท. ปฏิบัติงาน (คน)" class="r-staff p-1 rounded bg-gray-950 text-white border border-gray-700">
-                    <textarea placeholder="5. จำนวนทรัพยากร (เคาะขึ้นบรรทัดใหม่เพิ่มได้)" rows="2" class="r-assets p-1 rounded bg-gray-950 text-white border border-gray-700"></textarea>
+                    <textarea placeholder="5. จำนวนทรัพยากร (รถดับเพลิง,อุปกรณ์ต่างๆ)" rows="2" class="r-assets p-1 rounded bg-gray-950 text-white border border-gray-700"></textarea>
                 </div>
                 <div class="flex gap-2 pt-1">
                     <button onclick="deployResource('${itemId}')" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold py-1 rounded">📍 ส่งลงแผนที่</button>
-                    <button onclick="saveResourceToSheet('${itemId}')" class="w-1/2 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold py-1 rounded">💾 บันทึกหน้า Resource</button>
+                    <button onclick="saveResourceToSheet('${itemId}')" class="w-1/2 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold py-1 rounded">💾 บันทึกข้อมูล</button>
                 </div>`;
             list.appendChild(div);
         }
