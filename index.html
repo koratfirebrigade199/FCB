@@ -11,11 +11,10 @@
         .neon-banner { background-color: #ff003c; box-shadow: 0 0 20px #ff003c, inset 0 0 10px rgba(255,255,255,0.3); text-shadow: 0 0 8px rgba(255,255,255,0.8); }
         .neon-text-yellow { color: #ccff00; text-shadow: 0 0 10px rgba(204,255,0,0.6); }
         .neon-text-white { color: #ffffff; text-shadow: 0 0 12px rgba(255,255,255,0.9); }
-        .map-wrapper { position: relative; width: 100%; height: 520px; }
+        .map-wrapper { position: relative; width: 100%; height: 550px; }
         #live-map { width: 100%; height: 100%; z-index: 1; }
-        #sketchpad { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: auto; cursor: crosshair; }
-        .tactical-icon { background: rgba(0, 0, 0, 0.75); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; transition: transform 0.1s; }
-        .tactical-icon:hover { transform: scale(1.15); border-color: #ffcc00; }
+        .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; }
+        .tactical-icon:hover { border-color: #ffcc00; }
         
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
@@ -48,31 +47,29 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 space-y-4 flex flex-col lg:col-span-2">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h2 class="text-m font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-m font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ยุทธวิธี <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-2 items-center">
-                    <button onclick="setPenColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white"></button>
-                    <button onclick="setPenColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500"></button>
-                    <button onclick="setPenColor('#22c55e')" class="w-6 h-6 rounded-full bg-green-500"></button>
-                    <button onclick="setPenColor('#ffffff')" class="w-6 h-6 rounded-full bg-white"></button>
-                    <button onclick="toggleMapInteraction()" id="btn-mode" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500 ml-2">โหมด: ✍️ วาดเส้น</button>
-                    <button onclick="clearCanvas()" class="text-xs bg-gray-700 px-2 py-1 rounded font-bold hover:bg-gray-600">ล้างเส้นวาด</button>
+                    <button onclick="setPenColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white" title="สีแดง"></button>
+                    <button onclick="setPenColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500" title="สีน้ำเงิน"></button>
+                    <button onclick="setPenColor('#22c55e')" class="w-6 h-6 rounded-full bg-green-500" title="สีเขียว"></button>
+                    <button onclick="toggleMapInteraction()" id="btn-mode" class="text-xs bg-gray-700 px-2 py-1 rounded font-bold hover:bg-gray-600 ml-2">โหมด: 🗺️ เลื่อนแผนที่</button>
+                    <button onclick="undoLastLine()" class="text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
+                    <button onclick="clearAllLines()" class="text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้นทั้งหมด</button>
                     <button onclick="requestCurrentLocation()" class="text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 ดึงพิกัด</button>
                 </div>
             </div>
 
             <div class="bg-gray-950 p-2 rounded border border-gray-800 flex items-center space-x-2 overflow-x-auto">
-                <span class="text-xs font-bold text-gray-400 whitespace-nowrap">➕ เพิ่มไอคอน:</span>
+                <span class="text-xs font-bold text-gray-400 whitespace-nowrap">➕ เพิ่มไอคอนเชิงยุทธวิธี:</span>
                 <button onclick="spawnTacticalIcon('🚒', 'รถดับเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚒 รถดับเพลิง</button>
                 <button onclick="spawnTacticalIcon('🪜', 'รถกระเช้า')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🪜 รถกระเช้า</button>
                 <button onclick="spawnTacticalIcon('🚑', 'รถพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚑 รถพยาบาล</button>
-                <button onclick="spawnTacticalIcon('🔥', 'เปลวไฟ')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 เปลวไฟ</button>
+                <button onclick="spawnTacticalIcon('🔥', 'จุดต้นเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 เปลวไฟ</button>
                 <button onclick="spawnTacticalIcon('⛺', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⛺ ICP</button>
-                <button onclick="spawnTacticalIcon('🏥', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏥 Triage Zone</button>
             </div>
             
             <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
                 <div id="live-map"></div>
-                <canvas id="sketchpad"></canvas>
             </div>
             
             <div class="grid grid-cols-2 gap-2">
@@ -84,19 +81,16 @@
         <div class="space-y-4 flex flex-col">
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <h2 class="text-l font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร</h2>
-                    <div class="flex gap-2">
-                        <button onclick="saveResourceToSheet()" class="text-xs bg-amber-500 text-black px-2 py-1 rounded font-black hover:bg-amber-400">💾 บันทึก Resource</button>
-                        <button onclick="addICSItem()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
-                    </div>
+                    <h2 class="text-l font-bold text-yellow-400">🚒 จัดกำลังหน่วยงาน (Resource)</h2>
+                    <button onclick="addResourceRow()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
                 </div>
-                <div id="ics-list" class="space-y-3 max-h-[380px] overflow-y-auto pr-1 flex flex-col">
+                <div id="resource-list" class="space-y-3 max-h-[380px] overflow-y-auto pr-1 flex flex-col">
                     </div>
             </div>
 
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800">
-                <h2 class="text-xl font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">✔️ แภนปฏิบัติ SOP.</h2>
-                <button onclick="openChecklistModal()" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-black py-3 rounded shadow-lg text-center">📋 เปิดรายการแผนปฏิบัติ SOP.</button>
+                <h2 class="text-xl font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">✔️ แผนปฏิบัติ SOP.</h2>
+                <button onclick="openChecklistModal()" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-black py-3 rounded shadow-lg text-center">📋 เปิดรายการตรวจสอบ SOP.</button>
             </div>
 
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800">
@@ -113,7 +107,7 @@
         <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
             <h2 class="text-lg font-bold text-red-400">𫫇 SCBA ENTRY CONTROL BOARD</h2>
             <div class="flex gap-2">
-                <button onclick="saveSCBAToSheet()" class="bg-amber-500 hover:bg-amber-400 text-black font-black px-4 py-1 rounded text-sm shadow transition">💾 บันทึกข้อมูลลง SCBA</button>
+                <button onclick="saveAllToGoogleSheet()" class="bg-amber-500 hover:bg-amber-400 text-black font-black px-4 py-1 rounded text-sm shadow transition animate-pulse">💾 บันทึกข้อมูลลง SCBA_Log</button>
                 <button onclick="addSCBARow()" class="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-1 rounded text-sm transition">+ เพิ่มชื่อนักดับเพลิง</button>
             </div>
         </div>
@@ -137,30 +131,41 @@
 
     <div id="checklist-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
         <div class="bg-gray-900 border-2 border-yellow-400 p-6 rounded-xl max-w-md w-full space-y-4">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-2"><h3 class="text-xl font-black text-yellow-400">📋 รายการตรวจสอบ SOP</h3><button onclick="closeChecklistModal()" class="text-gray-400 hover:text-white">✕</button></div>
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="text-xl font-black text-yellow-400">📋 รายการตรวจสอบ SOP</h3>
+                <button onclick="closeChecklistModal()" class="text-gray-400 hover:text-white">✕</button>
+            </div>
             <div class="space-y-3">
-                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-check-1" class="w-5 h-5 text-red-600"> <span class="font-bold">Size-Up พื้นที่ปฏิบัติ</span></label>
-                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-check-2" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดตั้ง ICP</span></label>
-                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-check-3" class="w-5 h-5 text-red-600"> <span class="font-bold">ตัดกระแสไฟฟ้า</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch1" class="w-5 h-5 text-red-600"> <span class="font-bold">Size-Up พื้นที่ปฏิบัติ</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch2" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดตั้ง ICP</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">ตัดกระแสไฟฟ้า</span></label>
+                
+                <div class="pt-2">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">📝 ข้อมูล/รายละเอียดเพิ่มเติมหน้างาน:</label>
+                    <textarea id="sop-custom-notes" rows="3" placeholder="กรอกหมายเหตุ หรือแผนปฏิบัติการเพิ่มเติม..." class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400"></textarea>
+                </div>
             </div>
-            <div class="space-y-1">
-                <label class="text-xs font-bold text-gray-400">📝 รายละเอียด/ข้อมูลเพิ่มเติมหน้างาน:</label>
-                <textarea id="sop-custom-notes" rows="3" placeholder="ระบุการประเมินความเสี่ยง อาคารทรุดตัว หรืออุปสรรคอื่น ๆ..." class="w-full bg-gray-950 border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-yellow-400"></textarea>
-            </div>
-            <button onclick="saveSOPToSheet()" class="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-black py-2 rounded shadow-md">🎯 บันทึกแผนหน้างานลงหน้า SOP</button>
+            <button onclick="saveSOPToGoogleSheet()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-2 rounded shadow-md">🎯 บันทึกแผนลงหน้า SOP</button>
         </div>
     </div>
 
     <script>
+        // เปลี่ยน URL Web App Script ของคุณตรงนี้
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let activeTimers = [];
-        let strokeHistory = []; // เก็บประวัติเส้นวาดไว้ในหน่วยความจำสำรองไม่ให้หายไปไหน
-        
-        let scbaAlarmInterval = null; 
-        let parAlarmInterval = null;  
+        let scbaAlarmInterval = null;
+        let parAlarmInterval = null;
         let isParAlarmActive = false;
+
+        // ตัวแปรสำหรับระบบวาดเส้นแผนที่แบบถาวร (Leaflet Polylines)
+        let map;
+        let currentMarker;
+        let isDrawMode = false;
+        let penColor = '#ef4444';
+        let drawnLines = [];
+        let currentLine = null;
 
         function updateClock() {
             const now = new Date();
@@ -169,6 +174,7 @@
         }
         setInterval(updateClock, 1000);
 
+        // 🔊 ระบบกริ่งไซเรนเตือนภัยแบบยาวต่อเนื่อง (คงคุณสมบัติเดิม)
         function triggerSirenSound(mode) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             let nowTime = audioCtx.currentTime;
@@ -187,10 +193,8 @@
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(800, nowTime);
             }
-
             gain.gain.setValueAtTime(0.4, nowTime);
             gain.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.4);
-            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(nowTime);
@@ -226,11 +230,11 @@
         }
 
         function checkSCBATimers(now) {
-            let hasDanger = false; let hasWarning = false;
+            let hasDanger = false;
+            let hasWarning = false;
             activeTimers.forEach(item => {
                 if (!item.active) return;
                 const tr = document.getElementById(item.id); if (!tr) return;
-                
                 if (now >= item.exitTime) {
                     item.dangerTriggered = true;
                     tr.className = "alert-danger-active";
@@ -245,11 +249,8 @@
             else if (hasWarning) startSCBAAlarmLoop('warning');
         }
 
-        let map, canvas, ctx, currentMarker;
-        let drawing = false, penColor = '#ef4444', isDrawMode = true;
-        let currentLine = [];
-
-        function initMapAndCanvas() {
+        // 🗺️ ระบบแผนที่และการวาดเส้นแบบถาวร (Persistent Drawing on Map)
+        function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
                 iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -259,20 +260,69 @@
             const defaultCoords = [14.9742, 102.0978];
             map = L.map('live-map').setView(defaultCoords, 16);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('ศูนย์กลางกองอำนวยการ').openPopup();
+            currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('ศูนย์กลางกองอำนวยการ ICP').openPopup();
             requestCurrentLocation();
 
-            canvas = document.getElementById('sketchpad'); ctx = canvas.getContext('2d');
-            resizeCanvas();
+            // อีเวนต์ดักจับการลากนิ้ว/เมาส์วาดลงบนแผนที่โดยตรง
+            map.on('mousedown', startMapDraw);
+            map.on('mousemove', duringMapDraw);
+            window.addEventListener('mouseup', endMapDraw);
+        }
 
-            canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); window.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('touchstart', startDrawing); canvas.addEventListener('touchmove', draw); window.addEventListener('touchend', stopDrawing);
-            window.addEventListener('resize', resizeCanvas);
-            
-            // เมื่อเลื่อนแผนที่หรือซูม ให้วาดเส้นประวัติกลับคืนมา เพื่อให้เส้นคงอยู่เสมอถาวร
-            map.on('move', redrawCanvasHistory);
-            map.on('zoom', redrawCanvasHistory);
-            map.on('viewreset', redrawCanvasHistory);
+        function toggleMapInteraction() {
+            isDrawMode = !isDrawMode;
+            const btn = document.getElementById('btn-mode');
+            if (isDrawMode) {
+                btn.textContent = "โหมด: ✍️ วาดเส้น";
+                btn.className = "text-xs bg-blue-600 px-2 py-1 rounded font-bold ml-2";
+                map.dragging.disable();
+            } else {
+                btn.textContent = "โหมด: 🗺️ เลื่อนแผนที่";
+                btn.className = "text-xs bg-gray-700 px-2 py-1 rounded font-bold ml-2";
+                map.dragging.enable();
+            }
+        }
+
+        function startMapDraw(e) {
+            if (!isDrawMode) return;
+            currentLine = L.polyline([e.latlng], { color: penColor, weight: 4, opacity: 0.85 }).addTo(map);
+        }
+
+        function duringMapDraw(e) {
+            if (!isDrawMode || !currentLine) return;
+            currentLine.addLatLng(e.latlng);
+        }
+
+        function endMapDraw() {
+            if (currentLine) {
+                drawnLines.push(currentLine);
+                currentLine = null;
+            }
+        }
+
+        function undoLastLine() {
+            if (drawnLines.length > 0) {
+                const lastLine = drawnLines.pop();
+                map.removeLayer(lastLine);
+            }
+        }
+
+        function clearAllLines() {
+            drawnLines.forEach(line => map.removeLayer(line));
+            drawnLines = [];
+        }
+
+        function setPenColor(color) {
+            penColor = color;
+            if (!isDrawMode) toggleMapInteraction();
+        }
+
+        function spawnTacticalIcon(emoji, labelName) {
+            const centerBounds = map.getCenter();
+            const txtIcon = L.divIcon({ html: emoji, className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
+            const marker = L.marker(centerBounds, { icon: txtIcon, draggable: true }).addTo(map);
+            marker.bindPopup(`<b class="text-black">${labelName}</b><br><button onclick="map.removeLayer(this)" class="bg-red-600 text-white text-[10px] p-1 rounded mt-1">✕ ลบ</button>`);
+            if (isDrawMode) toggleMapInteraction();
         }
 
         function requestCurrentLocation() {
@@ -282,148 +332,107 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude; const lon = position.coords.longitude;
-                        map.setView([lat, lon], 17); currentMarker.setLatLng([lat, lon]).bindPopup(`📍 พิกัดปฏิบัติงาน`).openPopup();
-                        statusText.textContent = "✅ GPS พร้อมใช้งาน"; statusText.className = "text-xs text-green-400 font-bold";
+                        map.setView([lat, lon], 17); currentMarker.setLatLng([lat, lon]);
+                        statusText.textContent = "✅ GPS พร้อม"; statusText.className = "text-xs text-green-400 font-bold";
                     },
-                    () => { statusText.textContent = "❌ ใช้พิกัดเริ่มต้นแทน"; statusText.className = "text-xs text-red-400 font-bold"; },
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    () => { statusText.textContent = "❌ ใช้พิกัดเริ่มต้น"; statusText.className = "text-xs text-red-400 font-bold"; }
                 );
             }
         }
 
-        function resizeCanvas() { 
-            canvas.width = canvas.parentElement.clientWidth; 
-            canvas.height = canvas.parentElement.clientHeight; 
-            redrawCanvasHistory();
-        }
-
-        function toggleMapInteraction() {
-            isDrawMode = !isDrawMode; const btn = document.getElementById('btn-mode');
-            if (isDrawMode) { btn.textContent = "โหมด: ✍️ วาดเส้น"; btn.className = "text-xs bg-blue-600 px-2 py-1 rounded font-bold ml-2"; canvas.style.pointerEvents = "auto"; } 
-            else { btn.textContent = "โหมด: 🗺️ เลื่อนแผนที่"; btn.className = "text-xs bg-green-600 px-2 py-1 rounded font-bold ml-2"; canvas.style.pointerEvents = "none"; }
-        }
-
-        function startDrawing(e) { 
-            if (!isDrawMode) return; 
-            drawing = true; 
-            currentLine = [];
-            const coords = getEventCoords(e);
-            const latlng = map.containerPointToLatLng([coords.x, coords.y]);
-            currentLine.push(latlng);
-            draw(e); 
-        }
-
-        function stopDrawing() { 
-            if (drawing && currentLine.length > 1) {
-                strokeHistory.push({ color: penColor, points: currentLine });
-            }
-            drawing = false; 
-            ctx.beginPath(); 
-        }
-
-        function draw(e) {
-            if (!drawing || !isDrawMode) return; if (e.type === 'touchmove') e.preventDefault();
-            const coords = getEventCoords(e);
-            const latlng = map.containerPointToLatLng([coords.x, coords.y]);
-            currentLine.push(latlng);
-
-            // รีเฟรชและวาดใหม่ทั้งหมดแบบ Real-time ร่วมกับจุดใหม่
-            redrawCanvasHistory();
-        }
-
-        function getEventCoords(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-
-        // ฟังก์ชันสำคัญ: แปลงจุดพิกัด Lat-Long กลับมาเป็นจุดพิกัดบนหน้าจอเพื่อคงเส้นวาดไว้ถาวร
-        function redrawCanvasHistory() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.lineWidth = 4; ctx.lineCap = 'round';
-
-            // 1. วาดเส้นเก่าทั้งหมดที่บันทึกไว้ในประวัติ
-            strokeHistory.forEach(stroke => {
-                ctx.strokeStyle = stroke.color;
-                ctx.beginPath();
-                stroke.points.forEach((latlng, idx) => {
-                    const point = map.latLngToContainerPoint(latlng);
-                    if (idx === 0) ctx.moveTo(point.x, point.y);
-                    else ctx.lineTo(point.x, point.y);
-                });
-                ctx.stroke();
-            });
-
-            // 2. วาดเส้นปัจจุบันที่กำลังลากนิ้วอยู่ขณะนั้น
-            if (drawing && currentLine.length > 0) {
-                ctx.strokeStyle = penColor;
-                ctx.beginPath();
-                currentLine.forEach((latlng, idx) => {
-                    const point = map.latLngToContainerPoint(latlng);
-                    if (idx === 0) ctx.moveTo(point.x, point.y);
-                    else ctx.lineTo(point.x, point.y);
-                });
-                ctx.stroke();
-            }
-        }
-
-        function setPenColor(color) { penColor = color; if(!isDrawMode) toggleMapInteraction(); }
-        function clearCanvas() { strokeHistory = []; ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-        function openChecklistModal() { document.getElementById('checklist-modal').classList.remove('hidden'); }
-        function closeChecklistModal() { document.getElementById('checklist-modal').classList.add('hidden'); }
-
-        function startPARTimer(minutes, btnId) {
-            const btn = document.getElementById(btnId); btn.disabled = true; let secondsLeft = minutes * 60;
-            const interval = setInterval(() => {
-                secondsLeft--; btn.textContent = `⏱️ PAR: ${Math.floor(secondsLeft / 60)}:${secondsLeft % 60 < 10 ? '0' : ''}${secondsLeft % 60}`;
-                if (secondsLeft <= 0) { 
-                    clearInterval(interval); btn.disabled = false; btn.textContent = `จับเวลา PAR ${minutes} นาที`; 
-                    document.getElementById('par-alert-box').classList.remove('hidden'); startPARAlarmLoop();
-                }
-            }, 1000);
-        }
-
-        // ➕ เพิ่มหน่วยงานตามโครงสร้างฟอร์มกรอกข้อมูลเรียงลำดับ 5 หัวข้อ
-        function addICSItem() {
-            const list = document.getElementById('ics-list'); const div = document.createElement('div');
-            const itemId = "ics_" + Date.now(); div.id = itemId;
-            div.className = "ics-item bg-gray-800 p-3 rounded border border-gray-700 space-y-2 relative group shadow";
+        // 🚒 ฟังก์ชันเพิ่มหน่วยงานตามลำดับเงื่อนไขใหม่
+        function addResourceRow() {
+            const list = document.getElementById('resource-list');
+            const itemId = "res_" + Date.now();
+            const div = document.createElement('div');
+            div.id = itemId;
+            div.className = "bg-gray-800 p-3 rounded border border-gray-700 space-y-2 relative";
             div.innerHTML = `
-                <div class="flex justify-between items-center border-b border-gray-700 pb-1 mb-1">
-                    <span class="text-xs font-bold text-amber-400">📋 ฟอร์มข้อมูลหน่วยงานสนับสนุน</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500 text-sm font-bold">✕ นำออก</button>
+                <div class="flex justify-between items-center border-b border-gray-700 pb-1">
+                    <span class="text-xs font-black text-amber-400">📋 กรอกข้อมูลหน่วยสนับสนุน</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500 font-bold">✕</button>
                 </div>
-                <div class="grid grid-cols-1 gap-1.5 text-xs text-white">
-                    <input type="text" placeholder="1. ชื่อหน่วยงาน" class="r-agency bg-gray-950 border border-gray-700 rounded p-1 w-full text-yellow-400 font-bold focus:outline-none">
-                    <input type="text" placeholder="2. ผู้ควบคุม (ชื่อ-สกุล)" class="r-commander bg-gray-950 border border-gray-700 rounded p-1 w-full focus:outline-none">
-                    <input type="text" placeholder="3. ข้อมูลประสานงาน (โทร./รหัสวิทยุ)" class="r-contact bg-gray-950 border border-gray-700 rounded p-1 w-full focus:outline-none">
-                    <input type="number" placeholder="4. จำนวน จนท. ปฏิบัติงาน (คน)" class="r-staff bg-gray-950 border border-gray-700 rounded p-1 w-full focus:outline-none">
-                    <textarea placeholder="5. จำนวนทรัพยากร (สามารถกด Enter เคาะบรรทัดเพิ่มเติมได้)" class="r-resources bg-gray-950 border border-gray-700 rounded p-1 w-full h-16 resize-none focus:outline-none"></textarea>
+                <div class="grid grid-cols-1 gap-1.5 text-xs text-black">
+                    <input type="text" placeholder="1. ชื่อหน่วยงาน" class="r-agency p-1 rounded bg-gray-950 text-white border border-gray-700">
+                    <input type="text" placeholder="2. ผู้ควบคุม (ชื่อ-สกุล)" class="r-commander p-1 rounded bg-gray-950 text-white border border-gray-700">
+                    <input type="text" placeholder="3. ข้อมูลประสานงาน (โทร./รหัสวิทยุ)" class="r-contact p-1 rounded bg-gray-950 text-white border border-gray-700">
+                    <input type="number" placeholder="4. จำนวน จนท. ปฏิบัติงาน (คน)" class="r-staff p-1 rounded bg-gray-950 text-white border border-gray-700">
+                    <textarea placeholder="5. จำนวนทรัพยากร (เคาะขึ้นบรรทัดใหม่เพิ่มได้)" rows="2" class="r-assets p-1 rounded bg-gray-950 text-white border border-gray-700"></textarea>
                 </div>
-                <div class="pt-1">
-                    <button onclick="deployResourceToMap('${itemId}')" class="w-full bg-blue-700 hover:bg-blue-600 text-[10px] font-bold py-1 rounded text-white shadow">📍 ส่งสัญลักษณ์ลงแผนที่</button>
+                <div class="flex gap-2 pt-1">
+                    <button onclick="deployResource('${itemId}')" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold py-1 rounded">📍 ส่งลงแผนที่</button>
+                    <button onclick="saveResourceToSheet('${itemId}')" class="w-1/2 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold py-1 rounded">💾 บันทึกหน้า Resource</button>
                 </div>`;
             list.appendChild(div);
         }
 
-        function deployResourceToMap(itemId) {
-            const itemElement = document.getElementById(itemId);
-            const agency = itemElement.querySelector('.r-agency').value || "หน่วยงานไม่ระบุชื่อ";
-            const commander = itemElement.querySelector('.r-commander').value || "-";
+        // แสดงผลลัพธ์ข้อมูลทั้งหมดของหน่วยงานเมื่อคลิกเลือก Marker ในแผนที่
+        function deployResource(itemId) {
+            const row = document.getElementById(itemId);
+            const agency = row.querySelector('.r-agency').value || "ไม่ระบุหน่วยงาน";
+            const commander = row.querySelector('.r-commander').value || "-";
+            const contact = row.querySelector('.r-contact').value || "-";
+            const staff = row.querySelector('.r-staff').value || "0";
+            const assets = row.querySelector('.r-assets').value.replace(/\n/g, "<br>") || "-";
+
             const centerBounds = map.getCenter();
             const txtIcon = L.divIcon({ html: "🚒", className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
-            const resourceMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true, zIndexOffset: 900 }).addTo(map);
+            const resMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true }).addTo(map);
             
-            const popupContent = document.createElement('div');
-            popupContent.className = "text-black p-1 text-center";
-            popupContent.innerHTML = `<p class="font-black text-sm text-red-600 mb-0">${agency}</p><p class="text-xs text-gray-700 mb-1">คุมทีม: ${commander}</p><button class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded">✕ ถอนกำลัง</button>`;
-            popupContent.querySelector('button').onclick = () => map.removeLayer(resourceMarker);
-            resourceMarker.bindPopup(popupContent).openPopup();
-            if(isDrawMode) toggleMapInteraction();
+            // เนื้อหา Popup แสดงรายละเอียดทั้งหมดครบถ้วน
+            const popupHtml = `
+                <div class="text-black p-1 text-xs font-sans min-w-[200px]">
+                    <h4 class="font-black text-sm text-red-600 border-b border-gray-300 pb-1 mb-1">🚒 รายละเอียดหน่วยงาน</h4>
+                    <b>หน่วยงาน:</b> ${agency}<br>
+                    <b>ผู้ควบคุม:</b> ${commander}<br>
+                    <b>ติดต่อ:</b> ${contact}<br>
+                    <b>กำลังพล:</b> ${staff} คน<br>
+                    <b class="block mt-1 border-t border-gray-200 pt-1">รายการทรัพยากร:</b>
+                    <div class="text-gray-700 bg-gray-100 p-1 rounded max-h-[60px] overflow-y-auto font-mono">${assets}</div>
+                    <button onclick="map.removeLayer(this)" class="w-full bg-red-600 text-white text-[10px] py-0.5 rounded mt-2 font-bold">✕ ถอนกำลัง</button>
+                </div>`;
+            
+            resMarker.bindPopup(popupHtml).openPopup();
+            if (isDrawMode) toggleMapInteraction();
         }
 
+        // ส่งข้อมูลจัดกำลังไปยังหน้า Page "Resource"
+        function saveResourceToSheet(itemId) {
+            const row = document.getElementById(itemId);
+            const payload = [{
+                pageName: "Resource",
+                timestamp: new Date().toLocaleString('th-TH'),
+                incidentName: document.getElementById('incident-name').value,
+                icName: document.getElementById('ic-name').value,
+                agency: row.querySelector('.r-agency').value,
+                commander: row.querySelector('.r-commander').value,
+                contact: row.querySelector('.r-contact').value,
+                staff: row.querySelector('.r-staff').value,
+                assets: row.querySelector('.r-assets').value
+            }];
+            sendDataToScript(payload);
+        }
+
+        // ส่งข้อมูลรายการตรวจสอบไปยังหน้า Page "SOP"
+        function openChecklistModal() { document.getElementById('checklist-modal').classList.remove('hidden'); }
+        function closeChecklistModal() { document.getElementById('checklist-modal').classList.add('hidden'); }
+        
+        function saveSOPToGoogleSheet() {
+            const payload = [{
+                pageName: "SOP",
+                timestamp: new Date().toLocaleString('th-TH'),
+                incidentName: document.getElementById('incident-name').value,
+                icName: document.getElementById('ic-name').value,
+                sizeUp: document.getElementById('sop-ch1').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
+                icpSetup: document.getElementById('sop-ch2').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
+                powerCut: document.getElementById('sop-ch3').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
+                customNotes: document.getElementById('sop-custom-notes').value
+            }];
+            sendDataToScript(payload);
+            closeChecklistModal();
+        }
+
+        // ระบบตารางรายชื่อนักดับเพลิง SCBA CONTROL
         function addSCBARow() {
             const tbody = document.getElementById('scba-rows'); const rowId = "scba_" + Date.now(); const row = document.createElement('tr');
             row.id = rowId; row.className = "hover:bg-gray-800/50 transition";
@@ -455,8 +464,7 @@
             document.getElementById(`stop-${rowId}`).classList.remove('hidden');
             
             activeTimers.push({
-                id: rowId, active: true, whistleTime: whistleTime, exitTime: exitTime, whistleTriggered: false, dangerTriggered: false,
-                rawValues: { timeIn: formatTime(now), whistleTimeStr: formatTime(whistleTime), exitTimeStr: formatTime(exitTime) }
+                id: rowId, active: true, whistleTime: whistleTime, exitTime: exitTime, whistleTriggered: false, dangerTriggered: false
             });
         }
 
@@ -470,123 +478,66 @@
             }
             row.className = "hover:bg-gray-800/50 transition";
             row.querySelector('.team-input').disabled = false; row.querySelector('.name-input').disabled = false; row.querySelector('.bar-input').disabled = false;
-            
             const startBtn = document.getElementById(`start-${rowId}`);
             startBtn.textContent = "START"; startBtn.className = "bg-blue-600 hover:bg-blue-500 text-[10px] px-2 py-1 rounded font-bold"; startBtn.disabled = false;
             document.getElementById(`stop-${rowId}`).classList.add('hidden');
             stopSCBAAlarmIfNeeded();
         }
 
-        function spawnTacticalIcon(emoji, labelName) {
-            const centerBounds = map.getCenter();
-            const txtIcon = L.divIcon({ html: emoji, className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
-            const newTacticalMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true, zIndexOffset: 1000 }).addTo(map);
-            const popupContent = document.createElement('div');
-            popupContent.className = "text-black p-1 text-center";
-            popupContent.innerHTML = `<p class="font-bold text-sm mb-1">${labelName}</p><button class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕ ลบ</button>`;
-            popupContent.querySelector('button').onclick = () => map.removeLayer(newTacticalMarker);
-            newTacticalMarker.bindPopup(popupContent);
-            if(isDrawMode) toggleMapInteraction();
-        }
-
-        // ==========================================
-        // 💾 ฟังก์ชันระบบส่งข้อมูลบันทึกไปยัง GOOGLE SHEET แยกหน้า PAGE ปลายทาง
-        // ==========================================
-
-        // 1. บันทึกข้อมูลการจัดกำลังกำลังพลเข้าสู่หน้า Page: Resource
-        function saveResourceToSheet() {
-            const incidentName = document.getElementById('incident-name').value;
-            const icName = document.getElementById('ic-name').value;
-            const blocks = document.querySelectorAll('#ics-list .ics-item');
-            if(blocks.length === 0) { alert("❌ ไม่มีข้อมูลหน่วยงานสนับสนุนสำหรับบันทึก"); return; }
-            
-            const payloadData = []; const timestamp = new Date().toLocaleString('th-TH');
-            blocks.forEach(block => {
-                const agency = block.querySelector('.r-agency').value;
-                const commander = block.querySelector('.r-commander').value;
-                const contact = block.querySelector('.r-contact').value;
-                const staff = block.querySelector('.r-staff').value;
-                const resources = block.querySelector('.r-resources').value;
-                
-                if(agency.trim() !== "") {
-                    payloadData.push({
-                        pageTarget: "Resource", // กำหนดส่งข้อมูลเข้าสู่ Page: Resource
-                        timestamp: timestamp, incidentName: incidentName, icName: icName,
-                        agency: agency, commander: commander, contact: contact, staff: staff, resources: resources
-                    });
-                }
-            });
-
-            if(payloadData.length === 0) { alert("⚠️ กรุณากรอกชื่อหน่วยงานเป็นอย่างน้อย"); return; }
-            sendDataToSheet(payloadData);
-        }
-
-        // 2. บันทึกรายการตรวจสอบ SOP เข้าสู่หน้า Page: SOP
-        function saveSOPToSheet() {
-            const incidentName = document.getElementById('incident-name').value;
-            const icName = document.getElementById('ic-name').value;
-            const timestamp = new Date().toLocaleString('th-TH');
-            
-            const check1 = document.getElementById('sop-check-1').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น";
-            const check2 = document.getElementById('sop-check-2').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น";
-            const check3 = document.getElementById('sop-check-3').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น";
-            const customNotes = document.getElementById('sop-custom-notes').value;
-
-            const payloadData = [{
-                pageTarget: "SOP", // กำหนดส่งข้อมูลเข้าสู่ Page: SOP
-                timestamp: timestamp, incidentName: incidentName, icName: icName,
-                sizeUp: check1, setupICP: check2, cutPower: check3, additionalNotes: customNotes
-            }];
-
-            sendDataToSheet(payloadData, () => { closeChecklistModal(); });
-        }
-
-        // 3. บันทึกตารางความปลอดภัยนักดับเพลิงเข้าสู่หน้า Page: SCBA_Log
-        function saveSCBAToSheet() {
-            const incidentName = document.getElementById('incident-name').value;
-            const icName = document.getElementById('ic-name').value;
+        // ส่งข้อมูลประวัตินักดับเพลิงไปยังหน้า Page "SCBA_Log"
+        function saveAllToGoogleSheet() {
             const rows = document.querySelectorAll('#scba-rows tr');
-            if(rows.length === 0) { alert("❌ ไม่มีข้อมูลรายชื่อนักดับเพลิงในระบบ"); return; }
-            
-            const payloadData = []; const timestamp = new Date().toLocaleString('th-TH');
+            if(rows.length === 0) { alert("❌ ไม่มีข้อมูลรายชื่อนักดับเพลิงในตาราง"); return; }
+            const payloadData = [];
+            const timestamp = new Date().toLocaleString('th-TH');
             rows.forEach(row => {
-                const team = row.querySelector('.team-input').value; const name = row.querySelector('.name-input').value;
-                const bar = row.querySelector('.bar-input').value; const timeIn = row.querySelector('.time-in').textContent;
-                const whistleTime = row.querySelector('.whistle-time').textContent; const exitTime = row.querySelector('.exit-time').textContent;
-                
+                const timeIn = row.querySelector('.time-in').textContent;
                 if(timeIn !== "--:--") {
                     payloadData.push({
-                        pageTarget: "SCBA_Log", // กำหนดส่งข้อมูลเข้าสู่ Page: SCBA_Log
-                        timestamp: timestamp, incidentName: incidentName, icName: icName, 
-                        team: team, name: name, bar: bar, timeIn: timeIn, whistleTime: whistleTime, exitTime: exitTime 
+                        pageName: "SCBA_Log",
+                        timestamp: timestamp,
+                        incidentName: document.getElementById('incident-name').value,
+                        icName: document.getElementById('ic-name').value,
+                        team: row.querySelector('.team-input').value,
+                        name: row.querySelector('.name-input').value,
+                        bar: row.querySelector('.bar-input').value,
+                        timeIn: timeIn,
+                        whistleTime: row.querySelector('.whistle-time').textContent,
+                        exitTime: row.querySelector('.exit-time').textContent
                     });
                 }
             });
-
-            if(payloadData.length === 0) { alert("⚠️ ไม่พบรายชื่อกำลังพลที่มีสถานะ START เพื่อส่งบันทึก"); return; }
-            sendDataToSheet(payloadData);
+            if(payloadData.length === 0) { alert("⚠️ กรุณากดปุ่ม START ที่รายชื่อเจ้าหน้าที่ก่อนบันทึกข้อมูล"); return; }
+            sendDataToScript(payloadData);
         }
 
-        // ตัวกลางรับชุดอาเรย์ยิงคำสั่ง POST ไปยัง Google Web App
-        function sendDataToSheet(dataArray, successCallback = null) {
-            fetch(GOOGLE_SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                cache: 'no-cache', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(dataArray) 
-            })
-            .then(() => { 
-                alert("✅ นำส่งคำสั่งบันทึกข้อมูลเข้าสู่ฐานข้อมูลเรียบร้อยแล้ว!"); 
-                if(successCallback) successCallback();
-            })
-            .catch(error => { 
-                console.error('Error:', error); 
-                alert("❌ เกิดข้อผิดพลาดทางเทคนิคในการเชื่อมต่อระบบเครือข่าย"); 
-            });
+        // จับเวลาหน่วยงาน PAR
+        function startPARTimer(minutes, btnId) {
+            const btn = document.getElementById(btnId); btn.disabled = true; let secondsLeft = minutes * 60;
+            const interval = setInterval(() => {
+                secondsLeft--; btn.textContent = `⏱️ PAR: ${Math.floor(secondsLeft / 60)}:${secondsLeft % 60 < 10 ? '0' : ''}${secondsLeft % 60}`;
+                if (secondsLeft <= 0) { 
+                    clearInterval(interval); btn.disabled = false; btn.textContent = `จับเวลา PAR ${minutes} นาที`; 
+                    document.getElementById('par-alert-box').classList.remove('hidden'); 
+                    startPARAlarmLoop();
+                }
+            }, 1000);
         }
 
-        window.onload = () => { initMapAndCanvas(); addSCBARow(); };
+        // ฟังก์ชันส่วนกลางสำหรับยิง API ไปบันทึกใน Google Sheets แบบแยกระบุหน้า Page
+        function sendDataToScript(data) {
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(() => { alert("✅ ส่งข้อมูลไปบันทึกบน Google Sheet สำเร็จ!"); })
+            .catch(error => { console.error('Error:', error); alert("❌ เกิดข้อผิดพลาดทางเทคนิค"); });
+        }
+
+        window.onload = () => { initMap(); addSCBARow(); addResourceRow(); };
     </script>
 </body>
 </html>
