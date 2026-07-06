@@ -143,8 +143,8 @@
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch1" class="w-5 h-5 text-red-600"> <span class="font-bold">Size-Up พื้นที่ปฏิบัติ</span></label>
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch2" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดตั้ง ICP</span></label>
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">ตัดกระแสไฟฟ้า</span></label>
-                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">รถดับเพลิงเข้าแหล่งน้ำ+Hydrant</span></label>
-                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch3" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดทีม RIT</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch4" class="w-5 h-5 text-red-600"> <span class="font-bold">รถดับเพลิงเข้าแหล่งน้ำ+Hydrant</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" id="sop-ch5" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดทีม RIT</span></label>
                 
                 <div class="pt-2">
                     <label class="block text-xs font-bold text-gray-400 mb-1">📝 ข้อมูล/รายละเอียดเพิ่มเติม:</label>
@@ -156,7 +156,6 @@
     </div>
 
     <script>
-        // เปลี่ยน URL Web App Script ของคุณตรงนี้
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -165,7 +164,6 @@
         let parAlarmInterval = null;
         let isParAlarmActive = false;
 
-        // ตัวแปรสำหรับระบบวาดเส้นแผนที่แบบถาวร (Leaflet Polylines)
         let map;
         let currentMarker;
         let isDrawMode = false;
@@ -180,7 +178,6 @@
         }
         setInterval(updateClock, 1000);
 
-        // 🔊 ระบบกริ่งไซเรนเตือนภัยแบบยาวต่อเนื่อง (คงคุณสมบัติเดิม)
         function triggerSirenSound(mode) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             let nowTime = audioCtx.currentTime;
@@ -255,7 +252,6 @@
             else if (hasWarning) startSCBAAlarmLoop('warning');
         }
 
-        // 🗺️ ระบบแผนที่และการวาดเส้นแบบถาวร (Persistent Drawing on Map)
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -269,7 +265,6 @@
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             requestCurrentLocation();
 
-            // อีเวนต์ดักจับการลากนิ้ว/เมาส์วาดลงบนแผนที่โดยตรง
             map.on('mousedown', startMapDraw);
             map.on('mousemove', duringMapDraw);
             window.addEventListener('mouseup', endMapDraw);
@@ -323,11 +318,26 @@
             if (!isDrawMode) toggleMapInteraction();
         }
 
+        // 🛠️ แก้ไขฟังก์ชันเพื่อให้ส่งตัวแปรอ้างอิง `marker` เข้าไปกดลบ Layer ตัวเองออกจากแผนที่ได้
         function spawnTacticalIcon(emoji, labelName) {
             const centerBounds = map.getCenter();
             const txtIcon = L.divIcon({ html: emoji, className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
             const marker = L.marker(centerBounds, { icon: txtIcon, draggable: true }).addTo(map);
-            marker.bindPopup(`<b class="text-black">${labelName}</b><br><button onclick="map.removeLayer(this)" class="bg-red-600 text-white text-[10px] p-1 rounded mt-1">✕ ลบ</button>`);
+            
+            // สร้าง container element สำหรับแสดงปุ่ม เพื่อแก้ปัญหาโค๊ดเดิมที่เรียก map.removeLayer(this) แล้วไม่ทำงาน
+            const popupContainer = document.createElement('div');
+            popupContainer.innerHTML = `<b class="text-black">${labelName}</b><br>`;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = "w-full bg-red-600 text-white text-[10px] py-1 px-2 rounded mt-2 font-bold shadow hover:bg-red-700 transition";
+            deleteBtn.textContent = "✕ ลบไอคอน";
+            deleteBtn.onclick = function() {
+                map.removeLayer(marker);
+            };
+            
+            popupContainer.appendChild(deleteBtn);
+            marker.bindPopup(popupContainer);
+            
             if (isDrawMode) toggleMapInteraction();
         }
 
@@ -346,7 +356,6 @@
             }
         }
 
-        // 🚒 ฟังก์ชันเพิ่มหน่วยงานตามลำดับเงื่อนไขใหม่
         function addResourceRow() {
             const list = document.getElementById('resource-list');
             const itemId = "res_" + Date.now();
@@ -372,7 +381,7 @@
             list.appendChild(div);
         }
 
-        // แสดงผลลัพธ์ข้อมูลทั้งหมดของหน่วยงานเมื่อคลิกเลือก Marker ในแผนที่
+        // 🛠️ แก้ไขเพื่อให้สามารถสั่งลบ Marker ทรัพยากรออกจากการจัดทีมบนแผนที่ได้จริงเมื่อกดปุ่ม "ถอนกำลัง"
         function deployResource(itemId) {
             const row = document.getElementById(itemId);
             const agency = row.querySelector('.r-agency').value || "ไม่ระบุหน่วยงาน";
@@ -385,24 +394,30 @@
             const txtIcon = L.divIcon({ html: "🚒", className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
             const resMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true }).addTo(map);
             
-            // เนื้อหา Popup แสดงรายละเอียดทั้งหมดครบถ้วน
-            const popupHtml = `
-                <div class="text-black p-1 text-xs font-sans min-w-[200px]">
-                    <h4 class="font-black text-sm text-red-600 border-b border-gray-300 pb-1 mb-1">🚒 รายละเอียดหน่วยงาน</h4>
-                    <b>หน่วยงาน:</b> ${agency}<br>
-                    <b>ผู้ควบคุม:</b> ${commander}<br>
-                    <b>ติดต่อ:</b> ${contact}<br>
-                    <b>กำลังพล:</b> ${staff} คน<br>
-                    <b class="block mt-1 border-t border-gray-200 pt-1">รายการทรัพยากร:</b>
-                    <div class="text-gray-700 bg-gray-100 p-1 rounded max-h-[60px] overflow-y-auto font-mono">${assets}</div>
-                    <button onclick="map.removeLayer(this)" class="w-full bg-red-600 text-white text-[10px] py-0.5 rounded mt-2 font-bold">✕ ถอนกำลัง</button>
-                </div>`;
+            const popupContainer = document.createElement('div');
+            popupContainer.className = "text-black p-1 text-xs font-sans min-w-[200px]";
+            popupContainer.innerHTML = `
+                <h4 class="font-black text-sm text-red-600 border-b border-gray-300 pb-1 mb-1">🚒 รายละเอียดหน่วยงาน</h4>
+                <b>หน่วยงาน:</b> ${agency}<br>
+                <b>ผู้ควบคุม:</b> ${commander}<br>
+                <b>ติดต่อ:</b> ${contact}<br>
+                <b>กำลังพล:</b> ${staff} คน<br>
+                <b class="block mt-1 border-t border-gray-200 pt-1">รายการทรัพยากร:</b>
+                <div class="text-gray-700 bg-gray-100 p-1 rounded max-h-[60px] overflow-y-auto font-mono">${assets}</div>`;
             
-            resMarker.bindPopup(popupHtml).openPopup();
+            const removeBtn = document.createElement('button');
+            removeBtn.className = "w-full bg-red-600 text-white text-[10px] py-1 rounded mt-2 font-bold shadow hover:bg-red-700 transition";
+            removeBtn.textContent = "✕ ถอนกำลัง";
+            removeBtn.onclick = function() {
+                map.removeLayer(resMarker);
+            };
+            
+            popupContainer.appendChild(removeBtn);
+            resMarker.bindPopup(popupContainer).openPopup();
+            
             if (isDrawMode) toggleMapInteraction();
         }
 
-        // ส่งข้อมูลจัดกำลังไปยังหน้า Page "Resource"
         function saveResourceToSheet(itemId) {
             const row = document.getElementById(itemId);
             const payload = [{
@@ -419,7 +434,6 @@
             sendDataToScript(payload);
         }
 
-        // ส่งข้อมูลรายการตรวจสอบไปยังหน้า Page "SOP"
         function openChecklistModal() { document.getElementById('checklist-modal').classList.remove('hidden'); }
         function closeChecklistModal() { document.getElementById('checklist-modal').classList.add('hidden'); }
         
@@ -438,7 +452,6 @@
             closeChecklistModal();
         }
 
-        // ระบบตารางรายชื่อนักดับเพลิง SCBA CONTROL
         function addSCBARow() {
             const tbody = document.getElementById('scba-rows'); const rowId = "scba_" + Date.now(); const row = document.createElement('tr');
             row.id = rowId; row.className = "hover:bg-gray-800/50 transition";
@@ -490,7 +503,34 @@
             stopSCBAAlarmIfNeeded();
         }
 
-        // ส่งข้อมูลประวัตินักดับเพลิงไปยังหน้า Page "SCBA_Log"
+        let parTimerInterval = null;
+        function startPARTimer(minutes, buttonId) {
+            const btn = document.getElementById(buttonId);
+            const originalText = btn.textContent;
+            let totalSeconds = minutes * 60;
+            
+            if(parTimerInterval) clearInterval(parTimerInterval);
+            
+            btn.disabled = true;
+            btn.className = "bg-orange-600 text-xs py-2 rounded font-bold border border-orange-500 animate-pulse text-white";
+            
+            parTimerInterval = setInterval(() => {
+                let min = Math.floor(totalSeconds / 60);
+                let sec = totalSeconds % 60;
+                btn.textContent = `PAR เหลือ: ${min}:${sec < 10 ? '0' : ''}${sec}`;
+                
+                if (totalSeconds <= 0) {
+                    clearInterval(parTimerInterval);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    btn.className = "bg-gray-800 text-xs py-2 rounded font-bold border border-gray-700";
+                    document.getElementById('par-alert-box').classList.remove('hidden');
+                    startPARAlarmLoop();
+                }
+                totalSeconds--;
+            }, 1000);
+        }
+
         function saveAllToGoogleSheet() {
             const rows = document.querySelectorAll('#scba-rows tr');
             if(rows.length === 0) { alert("❌ ไม่มีข้อมูลรายชื่อนักดับเพลิงในตาราง"); return; }
@@ -513,37 +553,23 @@
                     });
                 }
             });
-            if(payloadData.length === 0) { alert("⚠️ กรุณากดปุ่ม START ที่รายชื่อเจ้าหน้าที่ก่อนบันทึกข้อมูล"); return; }
-            sendDataToScript(payloadData);
+            if(payloadData.length > 0) sendDataToScript(payloadData);
         }
 
-        // จับเวลาหน่วยงาน PAR
-        function startPARTimer(minutes, btnId) {
-            const btn = document.getElementById(btnId); btn.disabled = true; let secondsLeft = minutes * 60;
-            const interval = setInterval(() => {
-                secondsLeft--; btn.textContent = `⏱️ PAR: ${Math.floor(secondsLeft / 60)}:${secondsLeft % 60 < 10 ? '0' : ''}${secondsLeft % 60}`;
-                if (secondsLeft <= 0) { 
-                    clearInterval(interval); btn.disabled = false; btn.textContent = `จับเวลา PAR ${minutes} นาที`; 
-                    document.getElementById('par-alert-box').classList.remove('hidden'); 
-                    startPARAlarmLoop();
-                }
-            }, 1000);
-        }
-
-        // ฟังก์ชันส่วนกลางสำหรับยิง API ไปบันทึกใน Google Sheets แบบแยกระบุหน้า Page
-        function sendDataToScript(data) {
+        function sendDataToScript(payload) {
             fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                cache: 'no-cache',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(() => { alert("✅ ส่งข้อมูลไปบันทึกบน Google Sheet สำเร็จ!"); })
-            .catch(error => { console.error('Error:', error); alert("❌ เกิดข้อผิดพลาดทางเทคนิค"); });
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert("🚀 ส่งข้อมูลการบันทึกไปยังเซิร์ฟเวอร์เรียบร้อยแล้ว!");
+            }).catch(err => {
+                alert("❌ การส่งข้อมูลล้มเหลว: " + err);
+            });
         }
 
-        window.onload = () => { initMap(); addSCBARow(); addResourceRow(); };
+        window.onload = initMap;
     </script>
 </body>
 </html>
