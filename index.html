@@ -14,12 +14,20 @@
         .map-wrapper { position: relative; width: 100%; height: 520px; }
         #live-map { width: 100%; height: 100%; z-index: 1; }
         #sketchpad { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: auto; cursor: crosshair; }
-        .tactical-icon { background: rgba(0, 0, 0, 0.75); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; transition: transform 0.1s; }
-        .tactical-icon:hover { transform: scale(1.15); border-color: #ffcc00; }
+        
+        /* สไตล์ไอคอนยุทธวิธีบนแผนที่ */
+        .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #ffcc00; border-radius: 6px; color: #fff; font-weight: bold; padding: 4px; white-space: nowrap; font-size: 12px; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: move; display: flex; align-items: center; gap: 4px; }
+        .tactical-icon:hover { transform: scale(1.05); border-color: #ff003c; }
+        
+        /* แอนิเมชันแจ้งเตือน */
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.2); } 50% { background-color: rgba(234, 88, 12, 0.7); } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.2); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.8); border-color: #ffffff; } }
         .alert-warning-active { animation: flash-warning 1s infinite; }
         .alert-danger-active { animation: flash-danger 0.5s infinite; color: white; }
+        
+        /* สไตล์ไอเทมที่กำลังถูกลาก */
+        .draggable-ics { cursor: grab; user-select: none; transition: background-color 0.2s; }
+        .draggable-ics:active { cursor: grabbing; opacity: 0.6; }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans p-4">
@@ -66,7 +74,7 @@
                 <button onclick="spawnTacticalIcon('🏥', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏥 Triage Zone</button>
             </div>
             
-            <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
+            <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black" id="map-drop-zone" ondragover="allowDrop(event)" ondrop="dropResourceOnMap(event)">
                 <div id="live-map"></div>
                 <canvas id="sketchpad"></canvas>
             </div>
@@ -77,16 +85,19 @@
             </div>
         </div>
 
-        <div class="space-y-4 flex flex-col">
-            <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <h2 class="text-l font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร</h2>
+        <div class="space-y-4 flex flex-col justify-between">
+            <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col min-h-[300px]">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+                    <h2 class="text-l font-bold text-yellow-400 flex items-center gap-2">🚒 การจัดกำลังทรัพยากร <span class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">🖱️ ลากลงแผนที่ได้</span></h2>
                     <button onclick="addICSItem()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วย</button>
                 </div>
-                <div id="ics-list" class="space-y-2 max-h-[180px] overflow-y-auto pr-1">
-                    <div class="ics-item bg-blue-950/40 p-2 rounded border border-blue-900 relative group">
-                        <input type="text" value="พื้นที่ปฏิบัติการ (DIV.A)" class="bg-transparent font-bold text-blue-400 text-xs block w-full focus:outline-none">
-                        <input type="text" value="รถดับเพลิง" class="bg-transparent text-sm w-full focus:outline-none text-gray-300">
+                <div id="ics-list" class="space-y-2 flex-grow overflow-y-auto pr-1">
+                    <div class="ics-item draggable-ics bg-blue-950/40 p-2 rounded border border-blue-900 relative flex justify-between items-start gap-2" draggable="true" ondragstart="dragResource(event, this)">
+                        <div class="w-full">
+                            <input type="text" value="🚨 พื้นที่ปฏิบัติการ (DIV.A)" class="unit-title bg-transparent font-bold text-blue-400 text-sm block w-full focus:outline-none">
+                            <input type="text" value="รถดับเพลิงนครราชสีมา 01" class="unit-desc bg-transparent text-xs w-full focus:outline-none text-gray-300 mt-1">
+                        </div>
+                        <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-red-400 font-bold text-xs p-1">✕</button>
                     </div>
                 </div>
             </div>
@@ -145,7 +156,7 @@
     </div>
 
     <script>
-        // 🔗 วาง URL ของ Google Apps Script Web App ที่ได้จากขั้นตอนแรกที่นี่
+        // 🔗 วาง URL ของ Google Apps Script Web App ของคุณที่นี่
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -206,15 +217,63 @@
 
         function spawnTacticalIcon(emoji, labelName) {
             const centerBounds = map.getCenter();
-            const txtIcon = L.divIcon({ html: emoji, className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
-            const newTacticalMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true, zIndexOffset: 1000 }).addTo(map);
+            const txtIcon = L.divIcon({ 
+                html: `<div>${emoji} <span style="font-size:11px;">${labelName}</span></div>`, 
+                className: 'tactical-icon', 
+                iconSize: [window.var = null, 28], 
+                iconAnchor: [40, 14] 
+            });
+            createMarkerOnMap(centerBounds, txtIcon, labelName);
+        }
+
+        function createMarkerOnMap(latlng, iconObj, popupText) {
+            const newTacticalMarker = L.marker(latlng, { icon: iconObj, draggable: true, zIndexOffset: 1000 }).addTo(map);
             const popupContent = document.createElement('div');
             popupContent.className = "text-black p-1 text-center";
-            popupContent.innerHTML = `<p class="font-bold text-sm mb-1">${labelName}</p><button class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕ ลบ</button>`;
+            popupContent.innerHTML = `<p class="font-bold text-sm mb-1">${popupText}</p><button class="bg-red-600 text-white text-xs px-2 py-0.5 rounded">✕ ลบหมุด</button>`;
             popupContent.querySelector('button').onclick = () => map.removeLayer(newTacticalMarker);
             newTacticalMarker.bindPopup(popupContent);
             if(isDrawMode) toggleMapInteraction();
         }
+
+        // --- ⚙️ ฟังก์ชันสำหรับการลากวางทรัพยากร (Drag & Drop) ลงแผนที่ ---
+        function dragResource(event, element) {
+            const titleValue = element.querySelector('.unit-title').value || "หน่วยงาน";
+            const descValue = element.querySelector('.unit-desc').value || "";
+            const textToDisplay = descValue ? `${titleValue} (${descValue})` : titleValue;
+            event.dataTransfer.setData("text/plain", textToDisplay);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function dropResourceOnMap(event) {
+            event.preventDefault();
+            const textData = event.dataTransfer.getData("text/plain");
+            if (!textData) return;
+
+            // คำนวณหาตำแหน่งพิกัดพิกเซลบนกล่อง Map wrapper แล้วแปลงเป็นพิกัดภูมิศาสตร์ (Lat, Lng)
+            const mapWrapper = document.getElementById('map-drop-zone');
+            const rect = mapWrapper.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // แปลง Pixel Container Point เป็นภูมิศาสตร์บนแผนที่ Leaflet
+            const containerPoint = L.point(x, y);
+            const latlng = map.containerPointToLatLng(containerPoint);
+
+            // สร้าง Custom Icon ดึงเอาชื่อทีมจัดกำลังไปแสดงผล
+            const resIcon = L.divIcon({
+                html: `<div>🚒 <span style="font-size:11px;">${textData}</span></div>`,
+                className: 'tactical-icon',
+                iconSize: [null, 28],
+                iconAnchor: [30, 14]
+            });
+
+            createMarkerOnMap(latlng, resIcon, textData);
+        }
+        // ------------------------------------------------------------
 
         function requestCurrentLocation() {
             const statusText = document.getElementById('gps-status');
@@ -256,15 +315,23 @@
         function startPARTimer(minutes, btnId) {
             const btn = document.getElementById(btnId); btn.disabled = true; let secondsLeft = minutes * 60;
             const interval = setInterval(() => {
-                secondsLeft--; btn.textContent = `⏱️ PAR: ${Math.var = Math.floor(secondsLeft / 60)}:${secondsLeft % 60 < 10 ? '0' : ''}${secondsLeft % 60}`;
+                secondsLeft--; btn.textContent = `⏱️ PAR: ${Math.floor(secondsLeft / 60)}:${secondsLeft % 60 < 10 ? '0' : ''}${secondsLeft % 60}`;
                 if (secondsLeft <= 0) { clearInterval(interval); btn.disabled = false; btn.textContent = `จับเวลา PAR ${minutes} นาที`; document.getElementById('par-alert-box').classList.remove('hidden'); triggerBeep(1000, 0.2); }
             }, 1000);
         }
 
         function addICSItem() {
             const list = document.getElementById('ics-list'); const div = document.createElement('div');
-            div.className = "ics-item bg-gray-800 p-2 rounded border border-gray-700 relative group";
-            div.innerHTML = `<input type="text" placeholder="ชื่อหน่วยงาน" class="bg-transparent font-bold text-yellow-500 text-xs block w-full focus:outline-none"><input type="text" placeholder="รายละเอียดทีม" class="bg-transparent text-sm w-full focus:outline-none text-gray-300">`;
+            div.className = "ics-item draggable-ics bg-gray-800 p-2 rounded border border-gray-700 relative flex justify-between items-start gap-2";
+            div.setAttribute("draggable", "true");
+            div.setAttribute("ondragstart", "dragResource(event, this)");
+            div.innerHTML = `
+                <div class="w-full">
+                    <input type="text" placeholder="🚨 ชื่อหน่วยงาน / โซน" class="unit-title bg-transparent font-bold text-yellow-500 text-sm block w-full focus:outline-none">
+                    <input type="text" placeholder="รายละเอียดทีม / รถดับเพลิง" class="unit-desc bg-transparent text-xs w-full focus:outline-none text-gray-300 mt-1">
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-red-400 font-bold text-xs p-1">✕</button>
+            `;
             list.prepend(div);
         }
 
@@ -284,7 +351,6 @@
             row.querySelector('.team-input').disabled = true; row.querySelector('.name-input').disabled = true; row.querySelector('.bar-input').disabled = true;
             btn.textContent = "ACTIVE"; btn.className = "bg-green-600 text-[10px] px-2 py-1 rounded font-bold cursor-not-allowed"; btn.disabled = true;
             
-            // เก็บข้อมูลดิบลงตัวแปรสำหรับใช้อัปโหลด
             activeTimers.push({
                 id: rowId, active: true, whistleTime: whistleTime, exitTime: exitTime, whistleTriggered: false, dangerTriggered: false,
                 rawValues: {
@@ -293,7 +359,6 @@
             });
         }
 
-        // 💾 ฟังก์ชันดึงข้อมูลจากตาราง SCBA แล้วส่งขึ้นฐานข้อมูล Google Sheets ผ่าน API
         function saveAllToGoogleSheet() {
             const incidentName = document.getElementById('incident-name').value;
             const icName = document.getElementById('ic-name').value;
@@ -313,7 +378,6 @@
                 const whistleTime = row.querySelector('.whistle-time').textContent;
                 const exitTime = row.querySelector('.exit-time').textContent;
 
-                // ตรวจสอบว่าต้องเป็นรายชื่อที่กดปุ่ม START แล้วเท่านั้น (มีบันทึกเวลา)
                 if(timeIn !== "--:--") {
                     payloadData.push({
                         timestamp: timestamp, incidentName: incidentName, icName: icName,
@@ -324,10 +388,9 @@
 
             if(payloadData.length === 0) { alert("⚠️ กรุณากดปุ่ม START ที่รายชื่อนักดับเพลิงเพื่อเริ่มบันทึกเวลาก่อนส่งข้อมูล"); return; }
 
-            // ส่งข้อมูลข้ามเซิร์ฟเวอร์แบบ POST (CORS)
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // ตั้งเพื่อหลีกเลี่ยงปัญหา CORS บนเว็บบราวเซอร์กรณีที่ Google Script ไม่ได้รีเทิร์น Header ตรงๆ
+                mode: 'no-cors',
                 cache: 'no-cache',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadData)
