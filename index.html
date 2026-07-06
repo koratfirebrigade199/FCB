@@ -14,20 +14,12 @@
         .map-wrapper { position: relative; width: 100%; height: 520px; }
         #live-map { width: 100%; height: 100%; z-index: 1; }
         #sketchpad { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: auto; cursor: crosshair; }
-        
-        /* สไตล์ไอคอนยุทธวิธีบนแผนที่ */
-        .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #ffcc00; border-radius: 6px; color: #fff; font-weight: bold; padding: 4px; white-space: nowrap; font-size: 12px; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: move; display: flex; align-items: center; gap: 4px; }
-        .tactical-icon:hover { transform: scale(1.05); border-color: #ff003c; }
-        
-        /* แอนิเมชันแจ้งเตือน */
+        .tactical-icon { background: rgba(0, 0, 0, 0.75); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; transition: transform 0.1s; }
+        .tactical-icon:hover { transform: scale(1.15); border-color: #ffcc00; }
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.2); } 50% { background-color: rgba(234, 88, 12, 0.7); } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.2); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.8); border-color: #ffffff; } }
         .alert-warning-active { animation: flash-warning 1s infinite; }
         .alert-danger-active { animation: flash-danger 0.5s infinite; color: white; }
-        
-        /* สไตล์ไอเทมที่กำลังถูกลาก */
-        .draggable-ics { cursor: grab; user-select: none; transition: background-color 0.2s; }
-        .draggable-ics:active { cursor: grabbing; opacity: 0.6; }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans p-4">
@@ -74,7 +66,7 @@
                 <button onclick="spawnTacticalIcon('🏥', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏥 Triage Zone</button>
             </div>
             
-            <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black" id="map-drop-zone" ondragover="allowDrop(event)" ondrop="dropResourceOnMap(event)">
+            <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
                 <div id="live-map"></div>
                 <canvas id="sketchpad"></canvas>
             </div>
@@ -85,21 +77,14 @@
             </div>
         </div>
 
-        <div class="space-y-4 flex flex-col justify-between">
-            <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col min-h-[300px]">
-                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
-                    <h2 class="text-l font-bold text-yellow-400 flex items-center gap-2">🚒 การจัดกำลังทรัพยากร <span class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">🖱️ ลากลงแผนที่ได้</span></h2>
+        <div class="space-y-4 flex flex-col">
+            <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
+                    <h2 class="text-l font-bold text-yellow-400">🚒 การจัดกำลังทรัพยากร (ส่งลงแผนที่)</h2>
                     <button onclick="addICSItem()" class="text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วย</button>
                 </div>
-                <div id="ics-list" class="space-y-2 flex-grow overflow-y-auto pr-1">
-                    <div class="ics-item draggable-ics bg-blue-950/40 p-2 rounded border border-blue-900 relative flex justify-between items-start gap-2" draggable="true" ondragstart="dragResource(event, this)">
-                        <div class="w-full">
-                            <input type="text" value="🚨 พื้นที่ปฏิบัติการ (DIV.A)" class="unit-title bg-transparent font-bold text-blue-400 text-sm block w-full focus:outline-none">
-                            <input type="text" value="รถดับเพลิงนครราชสีมา 01" class="unit-desc bg-transparent text-xs w-full focus:outline-none text-gray-300 mt-1">
-                        </div>
-                        <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-red-400 font-bold text-xs p-1">✕</button>
+                <div id="ics-list" class="space-y-2 max-h-[320px] overflow-y-auto pr-1 flex flex-col">
                     </div>
-                </div>
             </div>
 
             <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800">
@@ -119,7 +104,7 @@
 
     <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 mt-4">
         <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
-            <h2 class="text-lg font-bold text-red-400">🫁 SCBA ENTRY CONTROL BOARD</h2>
+            <h2 class="text-lg font-bold text-red-400">𫫇 SCBA ENTRY CONTROL BOARD</h2>
             <div class="flex gap-2">
                 <button onclick="saveAllToGoogleSheet()" class="bg-amber-500 hover:bg-amber-400 text-black font-black px-4 py-1 rounded text-sm shadow transition animate-pulse">💾 บันทึกข้อมูลลง Sheet</button>
                 <button onclick="addSCBARow()" class="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-1 rounded text-sm transition">+ เพิ่มชื่อนักดับเพลิง</button>
@@ -156,11 +141,12 @@
     </div>
 
     <script>
-        // 🔗 วาง URL ของ Google Apps Script Web App ของคุณที่นี่
+        // 🔗 วาง URL ของ Google Apps Script Web App ที่นี่
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let activeTimers = [];
+        let alarmInterval = null; // เก็บอินเตอร์วอลของเสียงสัญญาณเตือนยาว
 
         function updateClock() {
             const now = new Date();
@@ -169,11 +155,45 @@
         }
         setInterval(updateClock, 1000);
 
-        function playBell(type) {
+        // ระบบเสียงกริ่งเตือนภัยยาวต่อเนื่อง (Continuous Siren Alarm)
+        function startContinuousAlarm(type) {
+            if (alarmInterval) return; // หากเสียงทำงานอยู่แล้วจะไม่สั่งซ้ำ
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (type === 'whistle') { triggerBeep(880, 0.15); setTimeout(() => triggerBeep(880, 0.15), 300); } 
-            else if (type === 'danger') { triggerBeep(554, 1.5); }
+
+            alarmInterval = setInterval(() => {
+                let nowTime = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                // แยกประเภทเสียงเตือน (เตือนให้ออก vs ออกทันที)
+                if (type === 'danger') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(554, nowTime);
+                    osc.frequency.linearRampToValueAtTime(880, nowTime + 0.4); // เสียงหวอสูง-ต่ำถี่ๆ
+                } else {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, nowTime);
+                }
+
+                gain.gain.setValueAtTime(0.3, nowTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.4);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(nowTime);
+                osc.stop(nowTime + 0.4);
+            }, 500); // ดังซ้ำต่อเนื่องทุกๆ 0.5 วินาที
         }
+
+        function stopContinuousAlarm() {
+            // ตรวจสอบว่ายังมีใครวิกฤตอยู่อีกไหม ถ้าไม่มีแล้วค่อยปิดเสียงทั้งหมด
+            const stillWarning = activeTimers.some(item => item.active && (item.whistleTriggered || item.dangerTriggered));
+            if (!stillWarning && alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+        }
+
         function triggerBeep(freq, duration) {
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.type = 'sine'; osc.frequency.value = freq; gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
@@ -182,12 +202,31 @@
         }
 
         function checkSCBATimers(now) {
+            let activeWarningFound = false;
+            let activeDangerFound = false;
+
             activeTimers.forEach(item => {
                 if (!item.active) return;
                 const tr = document.getElementById(item.id); if (!tr) return;
-                if (now >= item.whistleTime && !item.whistleTriggered) { item.whistleTriggered = true; tr.className = "alert-warning-active text-orange-400"; playBell('whistle'); }
-                if (now >= item.exitTime && !item.dangerTriggered) { item.dangerTriggered = true; tr.className = "alert-danger-active font-black"; playBell('danger'); }
+                
+                if (now >= item.whistleTime && now < item.exitTime) {
+                    item.whistleTriggered = true;
+                    tr.className = "alert-warning-active text-orange-400";
+                    activeWarningFound = true;
+                }
+                if (now >= item.exitTime) {
+                    item.dangerTriggered = true;
+                    tr.className = "alert-danger-active font-black";
+                    activeDangerFound = true;
+                }
             });
+
+            // ตรวจสอบเงื่อนไขเพื่อเปิดสัญญาณเสียงยาวต่อเนื่อง
+            if (activeDangerFound) {
+                startContinuousAlarm('danger');
+            } else if (activeWarningFound) {
+                startContinuousAlarm('whistle');
+            }
         }
 
         let map, canvas, ctx, currentMarker;
@@ -217,63 +256,15 @@
 
         function spawnTacticalIcon(emoji, labelName) {
             const centerBounds = map.getCenter();
-            const txtIcon = L.divIcon({ 
-                html: `<div>${emoji} <span style="font-size:11px;">${labelName}</span></div>`, 
-                className: 'tactical-icon', 
-                iconSize: [window.var = null, 28], 
-                iconAnchor: [40, 14] 
-            });
-            createMarkerOnMap(centerBounds, txtIcon, labelName);
-        }
-
-        function createMarkerOnMap(latlng, iconObj, popupText) {
-            const newTacticalMarker = L.marker(latlng, { icon: iconObj, draggable: true, zIndexOffset: 1000 }).addTo(map);
+            const txtIcon = L.divIcon({ html: emoji, className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
+            const newTacticalMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true, zIndexOffset: 1000 }).addTo(map);
             const popupContent = document.createElement('div');
             popupContent.className = "text-black p-1 text-center";
-            popupContent.innerHTML = `<p class="font-bold text-sm mb-1">${popupText}</p><button class="bg-red-600 text-white text-xs px-2 py-0.5 rounded">✕ ลบหมุด</button>`;
+            popupContent.innerHTML = `<p class="font-bold text-sm mb-1">${labelName}</p><button class="bg-red-600 text-white text-xs px-2 py-1 rounded">✕ ลบ</button>`;
             popupContent.querySelector('button').onclick = () => map.removeLayer(newTacticalMarker);
             newTacticalMarker.bindPopup(popupContent);
             if(isDrawMode) toggleMapInteraction();
         }
-
-        // --- ⚙️ ฟังก์ชันสำหรับการลากวางทรัพยากร (Drag & Drop) ลงแผนที่ ---
-        function dragResource(event, element) {
-            const titleValue = element.querySelector('.unit-title').value || "หน่วยงาน";
-            const descValue = element.querySelector('.unit-desc').value || "";
-            const textToDisplay = descValue ? `${titleValue} (${descValue})` : titleValue;
-            event.dataTransfer.setData("text/plain", textToDisplay);
-        }
-
-        function allowDrop(event) {
-            event.preventDefault();
-        }
-
-        function dropResourceOnMap(event) {
-            event.preventDefault();
-            const textData = event.dataTransfer.getData("text/plain");
-            if (!textData) return;
-
-            // คำนวณหาตำแหน่งพิกัดพิกเซลบนกล่อง Map wrapper แล้วแปลงเป็นพิกัดภูมิศาสตร์ (Lat, Lng)
-            const mapWrapper = document.getElementById('map-drop-zone');
-            const rect = mapWrapper.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            
-            // แปลง Pixel Container Point เป็นภูมิศาสตร์บนแผนที่ Leaflet
-            const containerPoint = L.point(x, y);
-            const latlng = map.containerPointToLatLng(containerPoint);
-
-            // สร้าง Custom Icon ดึงเอาชื่อทีมจัดกำลังไปแสดงผล
-            const resIcon = L.divIcon({
-                html: `<div>🚒 <span style="font-size:11px;">${textData}</span></div>`,
-                className: 'tactical-icon',
-                iconSize: [null, 28],
-                iconAnchor: [30, 14]
-            });
-
-            createMarkerOnMap(latlng, resIcon, textData);
-        }
-        // ------------------------------------------------------------
 
         function requestCurrentLocation() {
             const statusText = document.getElementById('gps-status');
@@ -320,25 +311,56 @@
             }, 1000);
         }
 
+        // เพิ่มทรัพยากรไล่ลำดับลงด้านล่าง (Append Child) และสั่งสร้างไอคอนปักหมุดลงแผนที่ได้
         function addICSItem() {
             const list = document.getElementById('ics-list'); const div = document.createElement('div');
-            div.className = "ics-item draggable-ics bg-gray-800 p-2 rounded border border-gray-700 relative flex justify-between items-start gap-2";
-            div.setAttribute("draggable", "true");
-            div.setAttribute("ondragstart", "dragResource(event, this)");
+            const itemId = "ics_" + Date.now();
+            div.id = itemId;
+            div.className = "ics-item bg-gray-800 p-2 rounded border border-gray-700 space-y-2 relative group";
             div.innerHTML = `
-                <div class="w-full">
-                    <input type="text" placeholder="🚨 ชื่อหน่วยงาน / โซน" class="unit-title bg-transparent font-bold text-yellow-500 text-sm block w-full focus:outline-none">
-                    <input type="text" placeholder="รายละเอียดทีม / รถดับเพลิง" class="unit-desc bg-transparent text-xs w-full focus:outline-none text-gray-300 mt-1">
+                <div class="flex gap-2">
+                    <input type="text" placeholder="🚒 ชื่อหน่วยงาน/รหัสรถ" class="unit-title bg-gray-950 font-bold text-yellow-400 text-xs p-1 rounded block w-full focus:outline-none">
+                    <button onclick="deployResourceToMap('${itemId}')" class="bg-amber-600 hover:bg-amber-500 text-[10px] font-bold px-2 py-1 rounded text-white whitespace-nowrap">📍 ปักหมุดลงแผนที่</button>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500 text-xs px-1">✕</button>
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-red-400 font-bold text-xs p-1">✕</button>
+                <input type="text" placeholder="รายละเอียดกำลังพล/ภารกิจ" class="unit-desc bg-transparent text-sm w-full focus:outline-none text-gray-300 px-1">
             `;
-            list.prepend(div);
+            list.appendChild(div); // แสดงไล่ลำดับลงมาด้านล่างตัวล่าสุดจะอยู่ล่างสุด
+        }
+
+        function deployResourceToMap(itemId) {
+            const itemElement = document.getElementById(itemId);
+            const title = itemElement.querySelector('.unit-title').value || "หน่วยงานสนับสนุน";
+            const desc = itemElement.querySelector('.unit-desc').value || "กำลังพลหน้างาน";
+            
+            const centerBounds = map.getCenter();
+            const txtIcon = L.divIcon({ html: "🚒", className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
+            const resourceMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true, zIndexOffset: 900 }).addTo(map);
+            
+            const popupContent = document.createElement('div');
+            popupContent.className = "text-black p-1 text-center";
+            popupContent.innerHTML = `<p class="font-black text-sm text-red-600 mb-0">${title}</p><p class="text-xs text-gray-700 mb-2">${desc}</p><button class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded">✕ ถอนกำลัง</button>`;
+            popupContent.querySelector('button').onclick = () => map.removeLayer(resourceMarker);
+            
+            resourceMarker.bindPopup(popupContent).openPopup();
+            if(isDrawMode) toggleMapInteraction();
         }
 
         function addSCBARow() {
             const tbody = document.getElementById('scba-rows'); const rowId = "scba_" + Date.now(); const row = document.createElement('tr');
             row.id = rowId; row.className = "hover:bg-gray-800/50 transition";
-            row.innerHTML = `<td class="p-2"><input type="text" class="team-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อทีม"></td><td class="p-2"><input type="text" class="name-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อ/รหัส"></td><td class="p-2"><input type="number" class="bar-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-center font-bold text-yellow-400" value="300"></td><td class="p-2 font-mono text-center time-in">--:--</td><td class="p-2 font-mono text-center text-orange-400 whistle-time">--:--</td><td class="p-2 font-mono text-center text-red-500 exit-time">--:--</td><td class="p-2 text-center"><button onclick="startSCBA('${rowId}', this)" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold">START</button><button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 ml-2">✕</button></td>`;
+            row.innerHTML = `
+                <td class="p-2"><input type="text" class="team-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อทีม"></td>
+                <td class="p-2"><input type="text" class="name-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-white" placeholder="ชื่อ/รหัส"></td>
+                <td class="p-2"><input type="number" class="bar-input bg-gray-950 border border-gray-800 rounded p-1 w-full text-center font-bold text-yellow-400" value="300"></td>
+                <td class="p-2 font-mono text-center time-in">--:--</td>
+                <td class="p-2 font-mono text-center text-orange-400 whistle-time">--:--</td>
+                <td class="p-2 font-mono text-center text-red-500 exit-time">--:--</td>
+                <td class="p-2 text-center flex items-center justify-center gap-1 mt-1">
+                    <button id="start-${rowId}" onclick="startSCBA('${rowId}', this)" class="bg-blue-600 hover:bg-blue-500 text-[10px] px-2 py-1 rounded font-bold">START</button>
+                    <button id="stop-${rowId}" onclick="stopSCBA('${rowId}')" class="bg-red-600 hover:bg-red-500 text-[10px] px-2 py-1 rounded font-bold hidden">STOP</button>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 ml-1">✕</button>
+                </td>`;
             tbody.appendChild(row);
         }
 
@@ -347,16 +369,46 @@
             const now = new Date(); const duration = Math.floor((bar / 300) * 45); const whistle = duration - 10;
             const whistleTime = new Date(now.getTime() + whistle * 60000); const exitTime = new Date(now.getTime() + duration * 60000);
             const formatTime = (date) => date.toTimeString().split(' ')[0].substring(0, 5);
+            
             row.querySelector('.time-in').textContent = formatTime(now); row.querySelector('.whistle-time').textContent = formatTime(whistleTime); row.querySelector('.exit-time').textContent = formatTime(exitTime);
             row.querySelector('.team-input').disabled = true; row.querySelector('.name-input').disabled = true; row.querySelector('.bar-input').disabled = true;
+            
             btn.textContent = "ACTIVE"; btn.className = "bg-green-600 text-[10px] px-2 py-1 rounded font-bold cursor-not-allowed"; btn.disabled = true;
+            document.getElementById(`stop-${rowId}`).classList.remove('hidden'); // แสดงปุ่ม STOP ข้างๆ ปุ่ม ACTIVE
             
             activeTimers.push({
                 id: rowId, active: true, whistleTime: whistleTime, exitTime: exitTime, whistleTriggered: false, dangerTriggered: false,
-                rawValues: {
-                    timeIn: formatTime(now), whistleTimeStr: formatTime(whistleTime), exitTimeStr: formatTime(exitTime)
-                }
+                rawValues: { timeIn: formatTime(now), whistleTimeStr: formatTime(whistleTime), exitTimeStr: formatTime(exitTime) }
             });
+        }
+
+        // ปุ่ม STOP หยุดการนับเวลาของแต่ละบุคคลและเคลียร์เสียงเตือนภัย
+        function stopSCBA(rowId) {
+            const row = document.getElementById(rowId);
+            const timerIndex = activeTimers.findIndex(item => item.id === rowId);
+            
+            if (timerIndex !== -1) {
+                activeTimers[timerIndex].active = false;
+                activeTimers[timerIndex].whistleTriggered = false;
+                activeTimers[timerIndex].dangerTriggered = false;
+            }
+            
+            // ปลดล็อคฟิลด์เพื่อให้แก้ไขได้หากเกิดการแก้ไขหน้างาน และเปลี่ยนสีแถวกลับเป็นปกติ
+            row.className = "hover:bg-gray-800/50 transition";
+            row.querySelector('.team-input').disabled = false;
+            row.querySelector('.name-input').disabled = false;
+            row.querySelector('.bar-input').disabled = false;
+            
+            // ปรับปุ่มกลับเป็นโหมดปกติ
+            const startBtn = document.getElementById(`start-${rowId}`);
+            startBtn.textContent = "START";
+            startBtn.className = "bg-blue-600 hover:bg-blue-500 text-[10px] px-2 py-1 rounded font-bold";
+            startBtn.disabled = false;
+            
+            document.getElementById(`stop-${rowId}`).classList.add('hidden');
+            
+            // เช็คเพื่อสั่งปิดสัญญาณเสียงถ้าวี่แวววิกฤตหมดแล้ว
+            stopContinuousAlarm();
         }
 
         function saveAllToGoogleSheet() {
@@ -395,13 +447,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadData)
             })
-            .then(() => {
-                alert("✅ ส่งคำสั่งบันทึกข้อมูลสำเร็จ!");
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-            });
+            .then(() => { alert("✅ ส่งคำสั่งบันทึกข้อมูลสำเร็จ!"); })
+            .catch(error => { console.error('Error:', error); alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล"); });
         }
 
         window.onload = () => { initMapAndCanvas(); addSCBARow(); };
