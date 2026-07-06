@@ -39,7 +39,7 @@
                 <div id="clock" class="text-3xl font-mono font-black neon-text-yellow">00:00:00</div>
                 <p class="text-xs font-bold text-white">วิทยุสื่อสาร: 162.225 MHz.</p>
                 <div id="par-alert-box" class="hidden mt-1 bg-red-600 border border-white text-white px-2 py-1.5 rounded text-xs font-black animate-pulse shadow-lg flex items-center gap-2">
-                    <span>⚠️ ALERT: ได้เวลาเช็กยอด PAR!</span>
+                    <span>⚠️ ALERT: PAR Check!</span>
                     <button onclick="stopPARAlarm()" class="bg-black text-yellow-400 px-1.5 py-0.5 rounded text-[10px] uppercase hover:bg-gray-900 border border-yellow-400">ปิดเตือน PAR</button>
                 </div>
             </div>
@@ -49,7 +49,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         <div class="bg-gray-900 p-4 rounded-lg shadow border border-gray-800 space-y-4 flex flex-col lg:col-span-2">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h2 class="text-m font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-m font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติ <span id="gps-status" class="text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-2 items-center">
                     <button onclick="setPenColor('#ef4444')" class="w-6 h-6 rounded-full bg-red-500 border-2 border-white"></button>
                     <button onclick="setPenColor('#3b82f6')" class="w-6 h-6 rounded-full bg-blue-500"></button>
@@ -66,9 +66,10 @@
                 <button onclick="spawnTacticalIcon('🚒', 'รถดับเพลิง')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚒 รถดับเพลิง</button>
                 <button onclick="spawnTacticalIcon('🪜', 'รถกระเช้า')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🪜 รถกระเช้า</button>
                 <button onclick="spawnTacticalIcon('🚑', 'รถพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🚑 รถพยาบาล</button>
-                <button onclick="spawnTacticalIcon('🔥', 'เปลวไฟ')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 เปลวไฟ</button>
+                <button onclick="spawnTacticalIcon('🔥', 'เปลวไฟ')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🔥 ไฟ</button>
                 <button onclick="spawnTacticalIcon('⛺', 'กองอำนวยการ ICP')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⛺ ICP</button>
-                <button onclick="spawnTacticalIcon('🏥', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">🏥 Triage Zone</button>
+                <button onclick="spawnTacticalIcon('➕', 'จุดพยาบาล')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">➕ Triage Zone</button>
+                <button onclick="spawnTacticalIcon('⚠️', 'จุดอันตราย')" class="bg-gray-800 hover:bg-gray-700 text-sm px-2 py-1 rounded">⚠️ จุดอันตราย</button>
             </div>
             
             <div class="map-wrapper rounded border border-gray-700 overflow-hidden bg-black">
@@ -140,8 +141,10 @@
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" class="w-5 h-5 text-red-600"> <span class="font-bold">Size-Up พื้นที่ปฏิบัติ</span></label>
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดตั้ง ICP</span></label>
                 <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" class="w-5 h-5 text-red-600"> <span class="font-bold">ตัดกระแสไฟฟ้า</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" class="w-5 h-5 text-red-600"> <span class="font-bold">รถดับเพลิงเข้าแหล่งน้ำ+Hydrant</span></label>
+                <label class="flex items-center space-x-3 text-base bg-gray-800 p-3 rounded cursor-pointer"><input type="checkbox" class="w-5 h-5 text-red-600"> <span class="font-bold">จัดทีม RIT.</span></label>
             </div>
-            <button onclick="closeChecklistModal()" class="w-full bg-gray-700 text-white font-bold py-2 rounded">🎯 บันทึกแผนหน้างาน</button>
+            <button onclick="closeChecklistModal()" class="w-full bg-gray-700 text-white font-bold py-2 rounded">🎯 บันทึกแผนงาน SOP.</button>
         </div>
     </div>
 
