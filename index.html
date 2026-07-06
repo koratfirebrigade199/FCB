@@ -16,10 +16,12 @@
         #sketchpad { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: auto; cursor: crosshair; }
         .tactical-icon { background: rgba(0, 0, 0, 0.75); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; transition: transform 0.1s; }
         .tactical-icon:hover { transform: scale(1.15); border-color: #ffcc00; }
-        @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.2); } 50% { background-color: rgba(234, 88, 12, 0.7); } }
-        @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.2); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.8); border-color: #ffffff; } }
-        .alert-warning-active { animation: flash-warning 1s infinite; }
-        .alert-danger-active { animation: flash-danger 0.5s infinite; color: white; }
+        
+        /* 💥 แอนิเมชันไฟกระพริบเตือนภัยหน้าจอ (SOP & SCBA) */
+        @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
+        @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
+        .alert-warning-active { animation: flash-warning 0.8s infinite; }
+        .alert-danger-active { animation: flash-danger 0.4s infinite; }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans p-4">
@@ -36,7 +38,10 @@
             <div class="text-right">
                 <div id="clock" class="text-3xl font-mono font-black neon-text-yellow">00:00:00</div>
                 <p class="text-xs font-bold text-white">วิทยุสื่อสาร: 162.225 MHz.</p>
-                <div id="par-alert-box" class="hidden mt-1 bg-yellow-400 text-black px-2 py-1 rounded text-xs font-black animate-bounce shadow-lg">⚠️ ถึงเวลาเช็กยอด PAR!</div>
+                <div id="par-alert-box" class="hidden mt-1 bg-red-600 border border-white text-white px-2 py-1.5 rounded text-xs font-black animate-pulse shadow-lg flex items-center gap-2">
+                    <span>⚠️ ALERT: ได้เวลาเช็กยอด PAR!</span>
+                    <button onclick="stopPARAlarm()" class="bg-black text-yellow-400 px-1.5 py-0.5 rounded text-[10px] uppercase hover:bg-gray-900 border border-yellow-400">ปิดเตือน PAR</button>
+                </div>
             </div>
         </div>
     </header>
@@ -141,12 +146,14 @@
     </div>
 
     <script>
-        // 🔗 วาง URL ของ Google Apps Script Web App ที่นี่
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let activeTimers = [];
-        let alarmInterval = null; // เก็บอินเตอร์วอลของเสียงสัญญาณเตือนยาว
+        
+        let scbaAlarmInterval = null; // อินเตอร์วอลของเสียงกริ่งยาวสำหรับทีม SCBA
+        let parAlarmInterval = null;  // อินเตอร์วอลของเสียงกริ่งยาวสำหรับระบบ PAR
+        let isParAlarmActive = false;
 
         function updateClock() {
             const now = new Date();
@@ -155,77 +162,99 @@
         }
         setInterval(updateClock, 1000);
 
-        // ระบบเสียงกริ่งเตือนภัยยาวต่อเนื่อง (Continuous Siren Alarm)
-        function startContinuousAlarm(type) {
-            if (alarmInterval) return; // หากเสียงทำงานอยู่แล้วจะไม่สั่งซ้ำ
+        // 🔊 ระบบกริ่งไซเรนเตือนยาวต่อเนื่อง (Continuous Siren Audio System)
+        function triggerSirenSound(mode) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            let nowTime = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            if (mode === 'danger') {
+                // เสียงไซเรนความถี่สูงกะชั้นฉุกเฉิน (สำหรับเคสหมดเวลา SCBA ต้องออกทันที)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(600, nowTime);
+                osc.frequency.linearRampToValueAtTime(950, nowTime + 0.3);
+            } else if (mode === 'par') {
+                // เสียงกริ่งกระแทกแจ้งเตือนกำลังพลข้ามสถานีสำหรับหมดเวลา PAR
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, nowTime);
+                osc.frequency.linearRampToValueAtTime(550, nowTime + 0.4);
+            } else {
+                // เสียงแจ้งเตือนเตือนให้ออก (Warning หวอระดับปานกลาง)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, nowTime);
+            }
 
-            alarmInterval = setInterval(() => {
-                let nowTime = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                // แยกประเภทเสียงเตือน (เตือนให้ออก vs ออกทันที)
-                if (type === 'danger') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(554, nowTime);
-                    osc.frequency.linearRampToValueAtTime(880, nowTime + 0.4); // เสียงหวอสูง-ต่ำถี่ๆ
-                } else {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, nowTime);
-                }
-
-                gain.gain.setValueAtTime(0.3, nowTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.4);
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(nowTime);
-                osc.stop(nowTime + 0.4);
-            }, 500); // ดังซ้ำต่อเนื่องทุกๆ 0.5 วินาที
+            gain.gain.setValueAtTime(0.4, nowTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, nowTime + 0.4);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(nowTime);
+            osc.stop(nowTime + 0.4);
         }
 
-        function stopContinuousAlarm() {
-            // ตรวจสอบว่ายังมีใครวิกฤตอยู่อีกไหม ถ้าไม่มีแล้วค่อยปิดเสียงทั้งหมด
-            const stillWarning = activeTimers.some(item => item.active && (item.whistleTriggered || item.dangerTriggered));
-            if (!stillWarning && alarmInterval) {
-                clearInterval(alarmInterval);
-                alarmInterval = null;
+        // เริ่มวนลูปเสียงยาวต่อเนื่อง
+        function startSCBAAlarmLoop(severity) {
+            if (scbaAlarmInterval) clearInterval(scbaAlarmInterval);
+            scbaAlarmInterval = setInterval(() => {
+                triggerSirenSound(severity);
+            }, 450); // วนเสียงถี่ทุกๆ 0.45 วินาที
+        }
+
+        function startPARAlarmLoop() {
+            if (parAlarmInterval) return;
+            isParAlarmActive = true;
+            parAlarmInterval = setInterval(() => {
+                triggerSirenSound('par');
+            }, 600);
+        }
+
+        function stopSCBAAlarmIfNeeded() {
+            // เช็คว่ามีใครในระบบบอร์ดที่ยังขึ้นสถานะกะพริบวิกฤต (Warning/Danger) ค้างอยู่หรือไม่
+            const stillCritical = activeTimers.some(item => item.active && (item.whistleTriggered || item.dangerTriggered));
+            if (!stillCritical && scbaAlarmInterval) {
+                clearInterval(scbaAlarmInterval);
+                scbaAlarmInterval = null;
             }
         }
 
-        function triggerBeep(freq, duration) {
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'sine'; osc.frequency.value = freq; gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + duration);
+        function stopPARAlarm() {
+            if (parAlarmInterval) {
+                clearInterval(parAlarmInterval);
+                parAlarmInterval = null;
+                isParAlarmActive = false;
+                document.getElementById('par-alert-box').classList.add('hidden');
+            }
         }
 
+        // 🚨 ตรวจสอบเงื่อนไขเวลาปฏิบัติงาน และแสดงไฟกระพริบฉุกเฉิน
         function checkSCBATimers(now) {
-            let activeWarningFound = false;
-            let activeDangerFound = false;
+            let hasDanger = false;
+            let hasWarning = false;
 
             activeTimers.forEach(item => {
                 if (!item.active) return;
                 const tr = document.getElementById(item.id); if (!tr) return;
                 
-                if (now >= item.whistleTime && now < item.exitTime) {
-                    item.whistleTriggered = true;
-                    tr.className = "alert-warning-active text-orange-400";
-                    activeWarningFound = true;
-                }
                 if (now >= item.exitTime) {
                     item.dangerTriggered = true;
-                    tr.className = "alert-danger-active font-black";
-                    activeDangerFound = true;
+                    // สั่งกระพริบไฟสีแดงฉุกเฉินความถี่สูงเต็มแถว
+                    tr.className = "alert-danger-active";
+                    hasDanger = true;
+                } else if (now >= item.whistleTime) {
+                    item.whistleTriggered = true;
+                    // สั่งกระพริบไฟเตือนสีส้มสลับเหลือง
+                    tr.className = "alert-warning-active text-orange-400";
+                    hasWarning = true;
                 }
             });
 
-            // ตรวจสอบเงื่อนไขเพื่อเปิดสัญญาณเสียงยาวต่อเนื่อง
-            if (activeDangerFound) {
-                startContinuousAlarm('danger');
-            } else if (activeWarningFound) {
-                startContinuousAlarm('whistle');
+            // เลือกระดับความสำคัญของเสียงกริ่งดับเพลิงตามสถานการณ์หน้างานล่าสุด
+            if (hasDanger) {
+                startSCBAAlarmLoop('danger');
+            } else if (hasWarning) {
+                startSCBAAlarmLoop('warning');
             }
         }
 
@@ -303,19 +332,24 @@
         function openChecklistModal() { document.getElementById('checklist-modal').classList.remove('hidden'); }
         function closeChecklistModal() { document.getElementById('checklist-modal').classList.add('hidden'); }
 
+        // ระบบตัวจับเวลาหลักหน่วยงาน PAR + เปิดกริ่งแจ้งเตือนต่อเนื่อง
         function startPARTimer(minutes, btnId) {
             const btn = document.getElementById(btnId); btn.disabled = true; let secondsLeft = minutes * 60;
             const interval = setInterval(() => {
                 secondsLeft--; btn.textContent = `⏱️ PAR: ${Math.floor(secondsLeft / 60)}:${secondsLeft % 60 < 10 ? '0' : ''}${secondsLeft % 60}`;
-                if (secondsLeft <= 0) { clearInterval(interval); btn.disabled = false; btn.textContent = `จับเวลา PAR ${minutes} นาที`; document.getElementById('par-alert-box').classList.remove('hidden'); triggerBeep(1000, 0.2); }
+                if (secondsLeft <= 0) { 
+                    clearInterval(interval); 
+                    btn.disabled = false; 
+                    btn.textContent = `จับเวลา PAR ${minutes} นาที`; 
+                    document.getElementById('par-alert-box').classList.remove('hidden'); 
+                    startPARAlarmLoop(); // เริ่มระบบลูปกริ่งดังยาวต่อเนื่อง
+                }
             }, 1000);
         }
 
-        // เพิ่มทรัพยากรไล่ลำดับลงด้านล่าง (Append Child) และสั่งสร้างไอคอนปักหมุดลงแผนที่ได้
         function addICSItem() {
             const list = document.getElementById('ics-list'); const div = document.createElement('div');
-            const itemId = "ics_" + Date.now();
-            div.id = itemId;
+            const itemId = "ics_" + Date.now(); div.id = itemId;
             div.className = "ics-item bg-gray-800 p-2 rounded border border-gray-700 space-y-2 relative group";
             div.innerHTML = `
                 <div class="flex gap-2">
@@ -323,25 +357,21 @@
                     <button onclick="deployResourceToMap('${itemId}')" class="bg-amber-600 hover:bg-amber-500 text-[10px] font-bold px-2 py-1 rounded text-white whitespace-nowrap">📍 ปักหมุดลงแผนที่</button>
                     <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500 text-xs px-1">✕</button>
                 </div>
-                <input type="text" placeholder="รายละเอียดกำลังพล/ภารกิจ" class="unit-desc bg-transparent text-sm w-full focus:outline-none text-gray-300 px-1">
-            `;
-            list.appendChild(div); // แสดงไล่ลำดับลงมาด้านล่างตัวล่าสุดจะอยู่ล่างสุด
+                <input type="text" placeholder="รายละเอียดกำลังพล/ภารกิจ" class="unit-desc bg-transparent text-sm w-full focus:outline-none text-gray-300 px-1">`;
+            list.appendChild(div);
         }
 
         function deployResourceToMap(itemId) {
             const itemElement = document.getElementById(itemId);
             const title = itemElement.querySelector('.unit-title').value || "หน่วยงานสนับสนุน";
             const desc = itemElement.querySelector('.unit-desc').value || "กำลังพลหน้างาน";
-            
             const centerBounds = map.getCenter();
             const txtIcon = L.divIcon({ html: "🚒", className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
             const resourceMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true, zIndexOffset: 900 }).addTo(map);
-            
             const popupContent = document.createElement('div');
             popupContent.className = "text-black p-1 text-center";
             popupContent.innerHTML = `<p class="font-black text-sm text-red-600 mb-0">${title}</p><p class="text-xs text-gray-700 mb-2">${desc}</p><button class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded">✕ ถอนกำลัง</button>`;
             popupContent.querySelector('button').onclick = () => map.removeLayer(resourceMarker);
-            
             resourceMarker.bindPopup(popupContent).openPopup();
             if(isDrawMode) toggleMapInteraction();
         }
@@ -374,7 +404,7 @@
             row.querySelector('.team-input').disabled = true; row.querySelector('.name-input').disabled = true; row.querySelector('.bar-input').disabled = true;
             
             btn.textContent = "ACTIVE"; btn.className = "bg-green-600 text-[10px] px-2 py-1 rounded font-bold cursor-not-allowed"; btn.disabled = true;
-            document.getElementById(`stop-${rowId}`).classList.remove('hidden'); // แสดงปุ่ม STOP ข้างๆ ปุ่ม ACTIVE
+            document.getElementById(`stop-${rowId}`).classList.remove('hidden');
             
             activeTimers.push({
                 id: rowId, active: true, whistleTime: whistleTime, exitTime: exitTime, whistleTriggered: false, dangerTriggered: false,
@@ -382,7 +412,6 @@
             });
         }
 
-        // ปุ่ม STOP หยุดการนับเวลาของแต่ละบุคคลและเคลียร์เสียงเตือนภัย
         function stopSCBA(rowId) {
             const row = document.getElementById(rowId);
             const timerIndex = activeTimers.findIndex(item => item.id === rowId);
@@ -393,60 +422,33 @@
                 activeTimers[timerIndex].dangerTriggered = false;
             }
             
-            // ปลดล็อคฟิลด์เพื่อให้แก้ไขได้หากเกิดการแก้ไขหน้างาน และเปลี่ยนสีแถวกลับเป็นปกติ
             row.className = "hover:bg-gray-800/50 transition";
-            row.querySelector('.team-input').disabled = false;
-            row.querySelector('.name-input').disabled = false;
-            row.querySelector('.bar-input').disabled = false;
+            row.querySelector('.team-input').disabled = false; row.querySelector('.name-input').disabled = false; row.querySelector('.bar-input').disabled = false;
             
-            // ปรับปุ่มกลับเป็นโหมดปกติ
             const startBtn = document.getElementById(`start-${rowId}`);
-            startBtn.textContent = "START";
-            startBtn.className = "bg-blue-600 hover:bg-blue-500 text-[10px] px-2 py-1 rounded font-bold";
-            startBtn.disabled = false;
-            
+            startBtn.textContent = "START"; startBtn.className = "bg-blue-600 hover:bg-blue-500 text-[10px] px-2 py-1 rounded font-bold"; startBtn.disabled = false;
             document.getElementById(`stop-${rowId}`).classList.add('hidden');
             
-            // เช็คเพื่อสั่งปิดสัญญาณเสียงถ้าวี่แวววิกฤตหมดแล้ว
-            stopContinuousAlarm();
+            // ปิดกริ่งยาวทันทีเมื่อผู้ประสบภัยหน้างานได้รับการจัดการเรียบร้อยแล้ว
+            stopSCBAAlarmIfNeeded();
         }
 
         function saveAllToGoogleSheet() {
             const incidentName = document.getElementById('incident-name').value;
             const icName = document.getElementById('ic-name').value;
             const rows = document.querySelectorAll('#scba-rows tr');
-            
             if(rows.length === 0) { alert("❌ ไม่มีข้อมูลรายชื่อนักดับเพลิงในตาราง"); return; }
-            if(GOOGLE_SCRIPT_URL.includes("ใส่_URL")) { alert("❌ โปรดตั้งค่า GOOGLE_SCRIPT_URL ในโค้ดก่อนใช้งาน"); return; }
-
-            const payloadData = [];
-            const timestamp = new Date().toLocaleString('th-TH');
-
+            const payloadData = []; const timestamp = new Date().toLocaleString('th-TH');
             rows.forEach(row => {
-                const team = row.querySelector('.team-input').value;
-                const name = row.querySelector('.name-input').value;
-                const bar = row.querySelector('.bar-input').value;
-                const timeIn = row.querySelector('.time-in').textContent;
-                const whistleTime = row.querySelector('.whistle-time').textContent;
-                const exitTime = row.querySelector('.exit-time').textContent;
-
+                const team = row.querySelector('.team-input').value; const name = row.querySelector('.name-input').value;
+                const bar = row.querySelector('.bar-input').value; const timeIn = row.querySelector('.time-in').textContent;
+                const whistleTime = row.querySelector('.whistle-time').textContent; const exitTime = row.querySelector('.exit-time').textContent;
                 if(timeIn !== "--:--") {
-                    payloadData.push({
-                        timestamp: timestamp, incidentName: incidentName, icName: icName,
-                        team: team, name: name, bar: bar, timeIn: timeIn, whistleTime: whistleTime, exitTime: exitTime
-                    });
+                    payloadData.push({ timestamp: timestamp, incidentName: incidentName, icName: icName, team: team, name: name, bar: bar, timeIn: timeIn, whistleTime: whistleTime, exitTime: exitTime });
                 }
             });
-
             if(payloadData.length === 0) { alert("⚠️ กรุณากดปุ่ม START ที่รายชื่อนักดับเพลิงเพื่อเริ่มบันทึกเวลาก่อนส่งข้อมูล"); return; }
-
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                cache: 'no-cache',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadData)
-            })
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadData) })
             .then(() => { alert("✅ ส่งคำสั่งบันทึกข้อมูลสำเร็จ!"); })
             .catch(error => { console.error('Error:', error); alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล"); });
         }
