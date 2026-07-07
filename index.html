@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
     <style>
         .neon-banner { background-color: #ff003c; box-shadow: 0 0 20px #ff003c, inset 0 0 10px rgba(255,255,255,0.3); text-shadow: 0 0 8px rgba(255,255,255,0.8); }
         .neon-text-yellow { color: #ccff00; text-shadow: 0 0 10px rgba(204,255,0,0.6); }
@@ -17,7 +15,9 @@
         #live-map { width: 100%; height: 100%; z-index: 1; }
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
-        .hydrant-icon { font-size: 20px; text-align: center; line-height: 24px; text-shadow: 0 0 6px #ff0000; }
+        
+        /* สไตล์ของไอคอนท่อดับเพลิงสีแดง */
+        .hydrant-icon { font-size: 22px; text-align: center; line-height: 24px; filter: drop-shadow(0px 0px 4px #ff0000); cursor: pointer; }
         
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
@@ -60,8 +60,7 @@
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
                     
-                    <input type="file" id="hydrant-file-input" accept=".kmz" class="hidden" onchange="handleHydrantFile(this)">
-                    <button onclick="document.getElementById('hydrant-file-input').click()" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง</button>
+                    <button onclick="toggleHydrantLayer()" id="btn-hydrant" class="text-[11px] sm:text-xs bg-red-600 text-white px-2.5 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md transition-all">🚰 ท่อดับเพลิง</button>
                 </div>
             </div>
 
@@ -215,6 +214,33 @@
         let mapMarkers = {};
         let resourcesData = {};
 
+        // ส่วนของข้อมูลท่อประปาดับเพลิง
+        let hydrantLayerGroup = null;
+        let isHydrantLayerVisible = false;
+        
+        // ข้อมูลจุดพิกัดท่อดับเพลิงนครราชสีมาดึงความละเอียดจากไฟล์แนบโดยตรง 
+        const hydrantFeatures = [
+            { lat: 14.974412, lng: 102.083375, id: "601", name: "จุดที่ 1-601", diameter: "150" },
+            { lat: 14.975199, lng: 102.083042, id: "602", name: "จุดที่ 2-602", diameter: "150" },
+            { lat: 14.976071, lng: 102.082635, id: "603", name: "จุดที่ 3-603", diameter: "100" },
+            { lat: 14.976455, lng: 102.082352, id: "604", name: "จุดที่ 4-604", diameter: "150" },
+            { lat: 14.976829, lng: 102.083017, id: "605", name: "จุดที่ 5-605", diameter: "100" },
+            { lat: 14.975769, lng: 102.083431, id: "606", name: "จุดที่ 6-606", diameter: "100" },
+            { lat: 14.975127, lng: 102.083818, id: "607", name: "จุดที่ 7-607", diameter: "100" },
+            { lat: 14.974198, lng: 102.084478, id: "608", name: "จุดที่ 8-608", diameter: "150" },
+            { lat: 14.973491, lng: 102.084898, id: "609", name: "จุดที่ 9-609", diameter: "150" },
+            { lat: 14.972373, lng: 102.085442, id: "610", name: "จุดที่ 10-610", diameter: "150" },
+            { lat: 14.971510, lng: 102.085817, id: "611", name: "จุดที่ 11-611", diameter: "100" },
+            { lat: 14.971077, lng: 102.086300, id: "612", name: "จุดที่ 12-612", diameter: "150" },
+            { lat: 14.971932, lng: 102.086883, id: "613", name: "จุดที่ 13-613", diameter: "100" },
+            { lat: 14.972849, lng: 102.086439, id: "614", name: "จุดที่ 14-614", diameter: "100" },
+            { lat: 14.973752, lng: 102.085942, id: "615", name: "จุดที่ 15-615", diameter: "100" },
+            { lat: 14.974465, lng: 102.085573, id: "616", name: "จุดที่ 16-616", diameter: "100" },
+            { lat: 14.975440, lng: 102.085117, id: "617", name: "จุดที่ 17-617", diameter: "100" },
+            { lat: 14.976579, lng: 102.084533, id: "618", name: "จุดที่ 18-618", diameter: "150" },
+            { lat: 14.977461, lng: 102.084052, id: "619", name: "จุดที่ 19-619", diameter: "150" }
+        ];
+
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
@@ -328,10 +354,13 @@
                 shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
             });
             const defaultCoords = [14.9742, 102.0978];
-            map = L.map('live-map', { preferCanvas: true }).setView(defaultCoords, 16);
+            map = L.map('live-map', { preferCanvas: true }).setView(defaultCoords, 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             requestCurrentLocation();
+
+            // สร้าง Layer Group ไว้รองรับตำแหน่งท่อดับเพลิง
+            hydrantLayerGroup = L.layerGroup();
 
             map.on('mousedown', startMapDraw);
             map.on('mousemove', duringMapDraw);
@@ -340,52 +369,53 @@
             map.on('touchstart', (e) => { if(isDrawMode) startMapDraw(e); }, {passive: true});
             map.on('touchmove', (e) => { if(isDrawMode) duringMapDraw(e); }, {passive: true});
             window.addEventListener('touchend', endMapDraw, {passive: true});
+            
+            // วาดจุดเตรียมไว้ใน Layer
+            setupHydrantPoints();
         }
 
-        // ส่วนปรับปรุงแก้ไข: ฟังก์ชันรับไฟล์ระดับ Local ป้องกัน Error ทุกชนิดและรองรับทุกอุปกรณ์
-        function handleHydrantFile(input) {
-            const file = input.files[0];
-            if (!file) return;
+        // ฟังก์ชันสร้างจุดท่อประปาดับเพลิงสีแดง
+        function setupHydrantPoints() {
+            const redHydrantIcon = L.divIcon({
+                html: '🚰',
+                className: 'hydrant-icon',
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const arrayBuffer = e.target.result;
+            hydrantFeatures.forEach(pt => {
+                const marker = L.marker([pt.lat, pt.lng], { icon: redHydrantIcon });
+                const popupContent = `
+                    <div class="text-black text-xs font-sans p-1">
+                        <h4 class="font-bold text-red-600 text-sm border-b pb-1 mb-1">🚰 จุดประปาดับเพลิง</h4>
+                        <b>ชื่อระบบ:</b> ${pt.name}<br>
+                        <b>OBJECTID:</b> ${pt.id}<br>
+                        <b>ขนาดท่อ (HDIAMETER):</b> ${pt.diameter} mm.<br>
+                        <b>สถานะระบบ:</b> พร้อมใช้งาน
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                hydrantLayerGroup.addLayer(marker);
+            });
+        }
+
+        // ฟังก์ชันเปิด-ปิดการแสดงผลหมุดท่อดับเพลิงบนแผนที่
+        function toggleHydrantLayer() {
+            const btn = document.getElementById('btn-hydrant');
+            if (isHydrantLayerVisible) {
+                map.removeLayer(hydrantLayerGroup);
+                isHydrantLayerVisible = false;
+                btn.className = "text-[11px] sm:text-xs bg-red-600 text-white px-2.5 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md transition-all";
+            } else {
+                map.addLayer(hydrantLayerGroup);
+                isHydrantLayerVisible = true;
+                btn.className = "text-[11px] sm:text-xs bg-green-700 text-white px-2.5 py-1 rounded font-bold hover:bg-green-600 flex items-center gap-1 shadow-md transition-all";
                 
-                JSZip.loadAsync(arrayBuffer)
-                .then(zip => {
-                    const kmlFile = Object.keys(zip.files).find(fileName => fileName.endsWith('.kml'));
-                    if (!kmlFile) throw new Error("ไม่พบข้อมูลพิกัด KML ภายในไฟล์ KMZ");
-                    return zip.files[kmlFile].async('string');
-                })
-                .then(kmlText => {
-                    const hydrantLayer = omnivore.kml.parse(kmlText, null, L.geoJson(null, {
-                        pointToLayer: function (feature, latlng) {
-                            const redHydrantIcon = L.divIcon({
-                                html: '🚰',
-                                className: 'hydrant-icon',
-                                iconSize: [24, 24],
-                                iconAnchor: [12, 12]
-                            });
-                            return L.marker(latlng, {icon: redHydrantIcon});
-                        },
-                        onEachFeature: function (feature, layer) {
-                            if (feature.properties && feature.properties.name) {
-                                layer.bindPopup(`<b class="text-black">🚰 จุดท่อดับเพลิง:</b><br><span class="text-xs text-gray-700">${feature.properties.name}</span>`);
-                            } else {
-                                layer.bindPopup(`<b class="text-black">🚰 จุดท่อประปาดับเพลิง</b>`);
-                            }
-                        }
-                    })).addTo(map);
-
-                    map.fitBounds(hydrantLayer.getBounds());
-                    alert("✅ โหลดพิกัดจุดท่อดับเพลิงสีแดงเรียบร้อยแล้ว!");
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("❌ ไม่สามารถแตกไฟล์ KMZ ได้ กรุณาตรวจสอบว่าเป็นไฟล์ที่ถูกต้อง");
-                });
-            };
-            reader.readAsArrayBuffer(file);
+                // ขยับแผนที่โฟกัสไปยังกลุ่มตำแหน่งท่อดับเพลิงจริงในเมือง
+                if(hydrantFeatures.length > 0){
+                    map.setView([hydrantFeatures[0].lat, hydrantFeatures[0].lng], 15);
+                }
+            }
         }
 
         function toggleMapInteraction() {
@@ -469,7 +499,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude; const lon = position.coords.longitude;
-                        map.setView([lat, lon], 17); currentMarker.setLatLng([lat, lon]);
+                        map.setView([lat, lon], 16); currentMarker.setLatLng([lat, lon]);
                         statusText.textContent = "✅ พร้อม"; statusText.className = "text-[10px] sm:text-xs text-green-400 font-bold";
                     },
                     () => { statusText.textContent = "❌ พิกัดหลัก"; statusText.className = "text-[10px] sm:text-xs text-red-400 font-bold"; }
@@ -477,6 +507,7 @@
             }
         }
 
+        // 2. ระบบโมดอลและการทำงานส่วนทรัพยากร (คงคุณสมบัติเดิมและจัดเรียงข้อมูลแบบย่อ)
         function openResourceModal(existingId = null) {
             document.getElementById('resource-modal').classList.remove('hidden');
             if(existingId && resourcesData[existingId]) {
