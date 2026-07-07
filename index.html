@@ -18,9 +18,6 @@
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
         
-        /* สไตล์ไอคอนท่อดับเพลิงสีแดง */
-        .hydrant-icon { font-size: 26px; text-align: center; line-height: 26px; text-shadow: 0 0 8px #ff0000, 0 0 3px #000; }
-        
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
         .alert-warning-active { animation: flash-warning 0.8s infinite; will-change: background-color, border-color; }
@@ -62,7 +59,7 @@
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
                     
-                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">𚚰 ท่อดับเพลิง (ปิด)</button>
+                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง (ปิด)</button>
                 </div>
             </div>
 
@@ -216,7 +213,6 @@
         let mapMarkers = {};
         let resourcesData = {};
         
-        // ตัวแปรควบคุมระบบจุดท่อดับเพลิง
         let hydrantLayerGroup = null;
         let isHydrantVisible = false;
         let hasLoadedHydrants = false;
@@ -339,10 +335,8 @@
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             requestCurrentLocation();
 
-            // แยกกรุ๊ปเลเยอร์จุดท่อดับเพลิง
             hydrantLayerGroup = L.layerGroup().addTo(map);
 
-            // 2. ปรับปรุงระบบอีเวนต์การวาดเส้นบนแผนที่ให้กลับมาทำงานเสถียรเหมือนเดิม ไม่ตีกันระหว่างโหมดวาดและโหมดเลื่อน
             map.on('mousedown', startMapDraw);
             map.on('mousemove', duringMapDraw);
             window.addEventListener('mouseup', endMapDraw);
@@ -352,29 +346,24 @@
             window.addEventListener('touchend', endMapDraw, {passive: true});
         }
 
-        // ฟังก์ชันสลับการ เปิด-ปิด แสดงผลจุดท่อดับเพลิงสีแดงบนแผนที่
         function toggleFireHydrantsLayer() {
             const btn = document.getElementById('btn-hydrant-toggle');
             
             if (isHydrantVisible) {
-                // คำสั่งสลับมาเป็น "ปิด"
                 map.removeLayer(hydrantLayerGroup);
                 btn.textContent = "𚚰 ท่อดับเพลิง (ปิด)";
                 isHydrantVisible = false;
             } else {
-                // คำสั่งสลับมาเป็น "เปิด"
                 map.addLayer(hydrantLayerGroup);
                 btn.textContent = "𚚰 ท่อดับเพลิง (เปิด)";
                 isHydrantVisible = true;
                 
-                // ดาวน์โหลดข้อมูลจากชีตเฉพาะการกดครั้งแรกเพื่อประหยัด Data
                 if (!hasLoadedHydrants) {
                     fetchHydrantsFromGoogleSheet();
                 }
             }
         }
 
-        // ดึงพิกัดจาก Apps Script ที่ผูกกับแผ่นงานหน้า "Fire Hydrant"
         function fetchHydrantsFromGoogleSheet() {
             const btn = document.getElementById('btn-hydrant-toggle');
             const originalText = btn.textContent;
@@ -386,16 +375,17 @@
                 if (data && data.status === "success" && data.hydrants) {
                     hydrantLayerGroup.clearLayers();
                     
-                    const redHydrantIcon = L.divIcon({
-                        html: '𚚰',
-                        className: 'hydrant-icon',
-                        iconSize: [26, 26],
-                        iconAnchor: [13, 13]
+                    // ปรับเปลี่ยนส่วนนี้: กำหนดให้ดึงรูปภาพไอคอนหัวรับน้ำดับเพลิงสีแดงจากที่ส่งมามาใช้พล็อตแทน Emoji
+                    const customHydrantIcon = L.icon({
+                        iconUrl: 'https://images.squarespace-cdn.com/content/v1/61c2069e25d4cd75180cb93b/d4e9d779-cb05-4e20-802c-567f139d4890/Fire+hydrant.png',
+                        iconSize: [32, 32], 
+                        iconAnchor: [16, 32],
+                        popupAnchor: [0, -32]
                     });
 
                     data.hydrants.forEach(item => {
                         if (item.latitude && item.longitude) {
-                            const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: redHydrantIcon });
+                            const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: customHydrantIcon });
                             marker.bindPopup(`<div class="text-black text-xs font-sans"><b>𚚰 จุดท่อประปาดับเพลิง</b><br>ID/สถานที่: ${item.name || 'ไม่ระบุ'}</div>`);
                             hydrantLayerGroup.addLayer(marker);
                         }
@@ -405,14 +395,13 @@
             })
             .catch(err => {
                 console.error(err);
-                alert("❌ ไม่สามารถเชื่อมต่อข้อมูลจุดท่อดับเพลิงจาก Google Drive ได้");
+                alert("❌ ไม่สามารถเชื่อมต่อข้อมูลจุดท่อดับเพลิงได้");
             })
             .finally(() => {
                 btn.textContent = isHydrantVisible ? "𚚰 ท่อดับเพลิง (เปิด)" : "𚚰 ท่อดับเพลิง (ปิด)";
             });
         }
 
-        // คุณสมบัติโหมดวาดเส้น (Drawing SOP)
         function toggleMapInteraction() {
             isDrawMode = !isDrawMode;
             const btn = document.getElementById('btn-mode');
