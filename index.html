@@ -59,7 +59,7 @@
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
                     
-                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">💧 ท่อดับเพลิง (ปิด)</button>
+                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">𚚰 ท่อดับเพลิง (ปิด)</button>
                 </div>
             </div>
 
@@ -351,11 +351,11 @@
             
             if (isHydrantVisible) {
                 map.removeLayer(hydrantLayerGroup);
-                btn.textContent = "💧 ท่อดับเพลิง (ปิด)";
+                btn.textContent = "𚚰 ท่อดับเพลิง (ปิด)";
                 isHydrantVisible = false;
             } else {
                 map.addLayer(hydrantLayerGroup);
-                btn.textContent = "💧 ท่อดับเพลิง (เปิด)";
+                btn.textContent = "𚚰 ท่อดับเพลิง (เปิด)";
                 isHydrantVisible = true;
                 
                 if (!hasLoadedHydrants) {
@@ -366,7 +366,6 @@
 
         function fetchHydrantsFromGoogleSheet() {
             const btn = document.getElementById('btn-hydrant-toggle');
-            const originalText = btn.textContent;
             btn.textContent = "⏳ กำลังโหลด...";
 
             fetch(`${GOOGLE_SCRIPT_URL}?action=getHydrants`)
@@ -375,9 +374,9 @@
                 if (data && data.status === "success" && data.hydrants) {
                     hydrantLayerGroup.clearLayers();
                     
-                    // ปรับเปลี่ยนส่วนนี้: กำหนดให้ดึงรูปภาพไอคอนหัวรับน้ำดับเพลิงสีแดงจากที่ส่งมามาใช้พล็อตแทน Emoji
+                    // แก้ไข: ใช้ภาพ Base64 Data URL จากภาพท่อดับเพลิงสีแดงที่คุณส่งมาโดยตรง เพื่อแก้ปัญหาภาพไม่ขึ้นอย่างถาวร
                     const customHydrantIcon = L.icon({
-                        iconUrl: 'https://images.squarespace-cdn.com/content/v1/61c2069e25d4cd75180cb93b/d4e9d779-cb05-4e20-802c-567f139d4890/Fire+hydrant.png',
+                        iconUrl: 'data:image/png;base64,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',
                         iconSize: [32, 32], 
                         iconAnchor: [16, 32],
                         popupAnchor: [0, -32]
@@ -386,7 +385,7 @@
                     data.hydrants.forEach(item => {
                         if (item.latitude && item.longitude) {
                             const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: customHydrantIcon });
-                            marker.bindPopup(`<div class="text-black text-xs font-sans"><b>💧 จุดท่อประปาดับเพลิง</b><br>ID/สถานที่: ${item.name || 'ไม่ระบุ'}</div>`);
+                            marker.bindPopup(`<div class="text-black text-xs font-sans"><b>𚚰 จุดท่อประปาดับเพลิง</b><br>ID/สถานที่: ${item.name || 'ไม่ระบุ'}</div>`);
                             hydrantLayerGroup.addLayer(marker);
                         }
                     });
