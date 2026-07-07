@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
     <style>
         .neon-banner { background-color: #ff003c; box-shadow: 0 0 20px #ff003c, inset 0 0 10px rgba(255,255,255,0.3); text-shadow: 0 0 8px rgba(255,255,255,0.8); }
         .neon-text-yellow { color: #ccff00; text-shadow: 0 0 10px rgba(204,255,0,0.6); }
@@ -49,7 +47,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
         <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 space-y-3 sm:space-y-4 flex flex-col lg:col-span-2">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-2 gap-2">
-                <h2 class="text-sm sm:text-base font-bold text-yellow-400 flex items-center gap-2">🎨 แฝนที่ปฏิบัติการ <span id="gps-status" class="text-[10px] sm:text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-sm sm:text-base font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-[10px] sm:text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-1.5 items-center">
                     <button onclick="setPenColor('#ef4444')" class="w-5 h-5 sm:w-6 h-6 rounded-full bg-red-500 border-2 border-white" title="สีแดง"></button>
                     <button onclick="setPenColor('#3b82f6')" class="w-5 h-5 sm:w-6 h-6 rounded-full bg-blue-500" title="สีน้ำเงิน"></button>
@@ -58,8 +56,6 @@
                     <button onclick="undoLastLine()" class="text-[11px] sm:text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
-                    
-                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง (ปิด)</button>
                 </div>
             </div>
 
@@ -90,9 +86,9 @@
             <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
                     <h2 class="text-sm sm:text-base font-bold text-yellow-400">🚒 ทรัพยากร (Check-in)</h2>
-                    <button onclick="openResourceModal()" class="text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
+                    <button onclick="addResourceRow()" class="text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
                 </div>
-                <div id="resource-list" class="space-y-2 max-h-[300px] lg:max-h-[380px] overflow-y-auto pr-1 flex flex-col">
+                <div id="resource-list" class="space-y-3 max-h-[300px] lg:max-h-[380px] overflow-y-auto pr-1 flex flex-col">
                 </div>
             </div>
 
@@ -113,7 +109,7 @@
 
     <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 mt-3 sm:mt-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-2 mb-3 gap-2">
-            <h2 class="text-base sm:text-lg font-bold text-red-400">🤿 SCBA ENTRY CONTROL BOARD</h2>
+            <h2 class="text-base sm:text-lg font-bold text-red-400">𫫇 SCBA ENTRY CONTROL BOARD</h2>
             <div class="flex gap-2 w-full sm:w-auto">
                 <button onclick="saveAllToGoogleSheet()" class="flex-1 sm:flex-initial bg-amber-500 hover:bg-amber-400 text-black font-black px-3 sm:px-4 py-1.5 rounded text-xs sm:text-sm shadow transition animate-pulse">💾 บันทึกข้อมูล</button>
                 <button onclick="addSCBARow()" class="flex-1 sm:flex-initial bg-green-600 hover:bg-green-500 text-white font-bold px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm transition">+ เพิ่มชื่อนักดับเพลิง</button>
@@ -134,42 +130,6 @@
                 </thead>
                 <tbody id="scba-rows" class="divide-y divide-gray-800"></tbody>
             </table>
-        </div>
-    </div>
-
-    <div id="resource-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
-        <div class="bg-gray-900 border-2 border-blue-500 p-5 sm:p-6 rounded-xl max-w-md w-full space-y-4">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h3 id="modal-res-title" class="text-lg sm:text-xl font-black text-blue-400">🚒 จัดการข้อมูลหน่วยงาน</h3>
-                <button onclick="closeResourceModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
-            </div>
-            <input type="hidden" id="modal-res-id">
-            <div class="grid grid-cols-1 gap-2.5 text-xs sm:text-sm text-black">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">1. ชื่อหน่วยงาน:</label>
-                    <input type="text" id="m-r-agency" class="w-full p-2 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">2. ผู้ควบคุม (ชื่อ-สกุล):</label>
-                    <input type="text" id="m-r-commander" class="w-full p-2 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">3. ข้อมูลประสานงาน (โทร./วิทยุ):</label>
-                    <input type="text" id="m-r-contact" class="w-full p-2 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">4. จำนวน จนท. ปฏิบัติงาน (คน):</label>
-                    <input type="number" id="m-r-staff" class="w-full p-2 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">5. จำนวนทรัพยากร/อุปกรณ์:</label>
-                    <textarea id="m-r-assets" rows="2" class="w-full p-2 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none focus:border-blue-500"></textarea>
-                </div>
-            </div>
-            <div class="flex gap-2 pt-1">
-                <button onclick="executeDeployResource()" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold py-2 rounded shadow-md">📍 ส่งลงแผนที่</button>
-                <button onclick="executeSaveResourceToSheet()" class="w-1/2 bg-green-600 hover:bg-green-500 text-white text-xs sm:text-sm font-bold py-2 rounded shadow-md">💾 บันทึกข้อมูล</button>
-            </div>
         </div>
     </div>
 
@@ -211,11 +171,6 @@
         let drawnLines = [];
         let currentLine = null;
         let mapMarkers = {};
-        let resourcesData = {};
-        
-        let hydrantLayerGroup = null;
-        let isHydrantVisible = false;
-        let hasLoadedHydrants = false;
 
         function updateClock() {
             const now = new Date();
@@ -224,6 +179,7 @@
         }
         setInterval(updateClock, 1000);
 
+        // 🔊 ระบบกริ่งไซเรนเตือนภัยแบบยาวต่อเนื่อง
         function triggerSirenSound(mode) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             let nowTime = audioCtx.currentTime;
@@ -322,6 +278,7 @@
             }, 1000);
         }
 
+        // 🗺️ ระบบแผนที่และการวาดเส้นประสิทธิภาพสูง (รองรับ Touch Devices/iPad)
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -335,70 +292,14 @@
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             requestCurrentLocation();
 
-            hydrantLayerGroup = L.layerGroup().addTo(map);
-
             map.on('mousedown', startMapDraw);
             map.on('mousemove', duringMapDraw);
             window.addEventListener('mouseup', endMapDraw);
             
+            // เพิ่มการดักจับของอุปกรณ์หน้าจอสัมผัส (Tablet / iPad) แบบ Passive
             map.on('touchstart', (e) => { if(isDrawMode) startMapDraw(e); }, {passive: true});
             map.on('touchmove', (e) => { if(isDrawMode) duringMapDraw(e); }, {passive: true});
             window.addEventListener('touchend', endMapDraw, {passive: true});
-        }
-
-        function toggleFireHydrantsLayer() {
-            const btn = document.getElementById('btn-hydrant-toggle');
-            
-            if (isHydrantVisible) {
-                map.removeLayer(hydrantLayerGroup);
-                btn.textContent = "𚚰 ท่อดับเพลิง (ปิด)";
-                isHydrantVisible = false;
-            } else {
-                map.addLayer(hydrantLayerGroup);
-                btn.textContent = "𚚰 ท่อดับเพลิง (เปิด)";
-                isHydrantVisible = true;
-                
-                if (!hasLoadedHydrants) {
-                    fetchHydrantsFromGoogleSheet();
-                }
-            }
-        }
-
-        function fetchHydrantsFromGoogleSheet() {
-            const btn = document.getElementById('btn-hydrant-toggle');
-            btn.textContent = "⏳ กำลังโหลด...";
-
-            fetch(`${GOOGLE_SCRIPT_URL}?action=getHydrants`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.status === "success" && data.hydrants) {
-                    hydrantLayerGroup.clearLayers();
-                    
-                    // ปรับแต่งการใช้รูปภาพไอคอนหัวรับน้ำดับเพลิงสีแดงอ้างอิงตรงตามรูปภาพแนบ
-                    const customHydrantIcon = L.icon({
-                        iconUrl: 'https://images.squarespace-cdn.com/content/v1/61c2069e25d4cd75180cb93b/d4e9d779-cb05-4e20-802c-567f139d4890/Fire+hydrant.png',
-                        iconSize: [34, 34], 
-                        iconAnchor: [17, 34],
-                        popupAnchor: [0, -34]
-                    });
-
-                    data.hydrants.forEach(item => {
-                        if (item.latitude && item.longitude) {
-                            const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: customHydrantIcon });
-                            marker.bindPopup(`<div class="text-black text-xs font-sans"><b>🚰 จุดท่อประปาดับเพลิง</b><br>ID/สถานที่: ${item.name || 'ไม่ระบุ'}</div>`);
-                            hydrantLayerGroup.addLayer(marker);
-                        }
-                    });
-                    hasLoadedHydrants = true;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("❌ ไม่สามารถเชื่อมต่อข้อมูลจุดท่อดับเพลิงได้");
-            })
-            .finally(() => {
-                btn.textContent = isHydrantVisible ? "🚰 ท่อดับเพลิง (เปิด)" : "🚰 ท่อดับเพลิง (ปิด)";
-            });
         }
 
         function toggleMapInteraction() {
@@ -423,6 +324,7 @@
 
         function duringMapDraw(e) {
             if (!isDrawMode || !currentLine) return;
+            // Throttling ป้องกันประมวลผลพิกัดถี่เกินไปบน iPad/Tablet ช่วยลดอาการหน่วงกระตุก
             const now = performance.now();
             if (now - lastDrawTime < 16) return; 
             lastDrawTime = now;
@@ -458,9 +360,6 @@
                 map.removeLayer(mapMarkers[markerId]);
                 delete mapMarkers[markerId];
             }
-            const sideBox = document.getElementById(markerId);
-            if(sideBox) sideBox.remove();
-            if(resourcesData[markerId]) delete resourcesData[markerId];
         }
 
         function spawnTacticalIcon(emoji, labelName) {
@@ -490,115 +389,81 @@
             }
         }
 
-        function openResourceModal(existingId = null) {
-            document.getElementById('resource-modal').classList.remove('hidden');
-            if(existingId && resourcesData[existingId]) {
-                document.getElementById('modal-res-title').textContent = "✏️ แก้ไขข้อมูลหน่วยงาน";
-                document.getElementById('modal-res-id').value = existingId;
-                document.getElementById('m-r-agency').value = resourcesData[existingId].agency;
-                document.getElementById('m-r-commander').value = resourcesData[existingId].commander;
-                document.getElementById('m-r-contact').value = resourcesData[existingId].contact;
-                document.getElementById('m-r-staff').value = resourcesData[existingId].staff;
-                document.getElementById('m-r-assets').value = resourcesData[existingId].assets;
-            } else {
-                document.getElementById('modal-res-title').textContent = "🚒 เพิ่มข้อมูลหน่วยงาน";
-                document.getElementById('modal-res-id').value = "res_" + Date.now();
-                document.getElementById('m-r-agency').value = "";
-                document.getElementById('m-r-commander').value = "";
-                document.getElementById('m-r-contact').value = "";
-                document.getElementById('m-r-staff').value = "";
-                document.getElementById('m-r-assets').value = "";
-            }
-        }
-
-        function closeResourceModal() {
-            document.getElementById('resource-modal').classList.add('hidden');
-        }
-
-        function executeDeployResource() {
-            const id = document.getElementById('modal-res-id').value;
-            const agency = document.getElementById('m-r-agency').value || "ไม่ระบุหน่วยงาน";
-            const commander = document.getElementById('m-r-commander').value || "-";
-            const contact = document.getElementById('m-r-contact').value || "-";
-            const staff = document.getElementById('m-r-staff').value || "0";
-            const assets = document.getElementById('m-r-assets').value || "-";
-
-            resourcesData[id] = { agency, commander, contact, staff, assets };
-
-            let sideBox = document.getElementById(id);
-            if (!sideBox) {
-                sideBox = document.createElement('div');
-                sideBox.id = id;
-                document.getElementById('resource-list').appendChild(sideBox);
-            }
-            sideBox.className = "bg-gray-800 p-2 rounded border border-gray-700 flex justify-between items-center text-xs hover:border-blue-500 transition cursor-pointer";
-            sideBox.innerHTML = `
-                <div onclick="openResourceModal('${id}')" class="flex-grow font-bold text-gray-200 flex items-center gap-2">
-                    <span>🚒 ${agency}</span> <span class="text-[10px] bg-blue-900 text-blue-300 px-1 rounded">👥 ${staff} คน</span>
+        function addResourceRow() {
+            const list = document.getElementById('resource-list');
+            const itemId = "res_" + Date.now();
+            const div = document.createElement('div');
+            div.id = itemId;
+            div.className = "bg-gray-800 p-2.5 sm:p-3 rounded border border-gray-700 space-y-2 relative text-xs";
+            div.innerHTML = `
+                <div class="flex justify-between items-center border-b border-gray-700 pb-1">
+                    <span class="text-[11px] font-black text-amber-400">📋 ข้อมูลหน่วยงาน</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-red-500 font-bold">✕</button>
                 </div>
-                <button onclick="removeMapMarker('${id}')" class="text-gray-500 hover:text-red-500 ml-2 font-bold px-1">✕</button>
-            `;
-
-            let marker = mapMarkers[id];
-            if(!marker) {
-                const centerBounds = map.getCenter();
-                const txtIcon = L.divIcon({ html: "🚒", className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
-                marker = L.marker(centerBounds, { icon: txtIcon, draggable: true }).addTo(map);
-                mapMarkers[id] = marker;
-            }
-
-            updateMarkerPopup(id, marker);
-            closeResourceModal();
-            if (isDrawMode) toggleMapInteraction();
+                <div class="grid grid-cols-1 gap-1 text-black">
+                    <input type="text" placeholder="1. ชื่อหน่วยงาน" class="r-agency p-1 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none">
+                    <input type="text" placeholder="2. ผู้ควบคุม (ชื่อ-สกุล)" class="r-commander p-1 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none">
+                    <input type="text" placeholder="3. ข้อมูลประสานงาน" class="r-contact p-1 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none">
+                    <input type="number" placeholder="4. จำนวน จนท. (คน)" class="r-staff p-1 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none">
+                    <textarea placeholder="5. รายการทรัพยากร/อุปกรณ์" rows="2" class="r-assets p-1 rounded bg-gray-950 text-white border border-gray-700 focus:outline-none"></textarea>
+                </div>
+                <div class="flex gap-2 pt-0.5">
+                    <button onclick="deployResource('${itemId}')" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold py-1 rounded shadow-sm">📍 ส่งลงแผนที่</button>
+                    <button onclick="saveResourceToSheet('${itemId}')" class="w-1/2 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold py-1 rounded shadow-sm">💾 บันทึกข้อมูล</button>
+                </div>`;
+            list.appendChild(div);
         }
 
-        function updateMarkerPopup(id, marker) {
-            const data = resourcesData[id];
-            const displayAssets = data.assets.replace(/\n/g, "<br>");
+        function deployResource(itemId) {
+            const row = document.getElementById(itemId);
+            const agency = row.querySelector('.r-agency').value || "ไม่ระบุหน่วยงาน";
+            const commander = row.querySelector('.r-commander').value || "-";
+            const contact = row.querySelector('.r-contact').value || "-";
+            const staff = row.querySelector('.r-staff').value || "0";
+            const assets = row.querySelector('.r-assets').value.replace(/\n/g, "<br>") || "-";
+
+            const centerBounds = map.getCenter();
+            const txtIcon = L.divIcon({ html: "🚒", className: 'tactical-icon', iconSize: [36, 36], iconAnchor: [18, 18] });
+            const resMarker = L.marker(centerBounds, { icon: txtIcon, draggable: true }).addTo(map);
+            
+            const markerId = "resource_" + Date.now() + Math.random().toString(36).substring(2, 5);
+            mapMarkers[markerId] = resMarker;
+            
             const popupHtml = `
                 <div class="text-black p-0.5 text-xs font-sans min-w-[180px] max-w-[240px]">
                     <h4 class="font-black text-sm text-red-600 border-b border-gray-300 pb-1 mb-1">🚒 รายละเอียดหน่วยงาน</h4>
-                    <b>หน่วยงาน:</b> ${data.agency}<br>
-                    <b>ผู้ควบคุม:</b> ${data.commander}<br>
-                    <b>ติดต่อ:</b> ${data.contact}<br>
-                    <b>กำลังพล:</b> ${data.staff} คน<br>
+                    <b>หน่วยงาน:</b> ${agency}<br>
+                    <b>ผู้ควบคุม:</b> ${commander}<br>
+                    <b>ติดต่อ:</b> ${contact}<br>
+                    <b>กำลังพล:</b> ${staff} คน<br>
                     <b class="block mt-1 border-t border-gray-200 pt-1">รายการทรัพยากร:</b>
-                    <div class="text-gray-700 bg-gray-100 p-1 rounded max-h-[60px] overflow-y-auto font-mono text-[11px]">${displayAssets}</div>
-                    <div class="flex gap-1 mt-2">
-                        <button onclick="openResourceModal('${id}')" class="w-1/2 bg-blue-600 text-white text-[11px] py-1 rounded font-bold shadow-sm">✏️ แก้ไขข้อมูล</button>
-                        <button onclick="removeMapMarker('${id}')" class="w-1/2 bg-red-600 text-white text-[11px] py-1 rounded font-bold shadow-sm">✕ ถอนกำลัง</button>
-                    </div>
+                    <div class="text-gray-700 bg-gray-100 p-1 rounded max-h-[60px] overflow-y-auto font-mono text-[11px]">${assets}</div>
+                    <button onclick="removeMapMarker('${markerId}')" class="w-full bg-red-600 text-white text-[11px] py-1 rounded mt-2 font-bold shadow-sm">✕ ถอนกำลัง</button>
                 </div>`;
-            marker.bindPopup(popupHtml);
+            
+            resMarker.bindPopup(popupHtml).openPopup();
+            if (isDrawMode) toggleMapInteraction();
         }
 
-        function executeSaveResourceToSheet() {
-            const id = document.getElementById('modal-res-id').value;
-            const agency = document.getElementById('m-r-agency').value;
-            const commander = document.getElementById('m-r-commander').value;
-            const contact = document.getElementById('m-r-contact').value;
-            const staff = document.getElementById('m-r-staff').value;
-            const assets = document.getElementById('m-r-assets').value;
-
+        function saveResourceToSheet(itemId) {
+            const row = document.getElementById(itemId);
             const payload = [{
                 pageName: "Resource",
                 timestamp: new Date().toLocaleString('th-TH'),
                 incidentName: document.getElementById('incident-name').value,
                 icName: document.getElementById('ic-name').value,
-                agency: agency,
-                commander: commander,
-                contact: contact,
-                staff: staff,
-                assets: assets
+                agency: row.querySelector('.r-agency').value,
+                commander: row.querySelector('.r-commander').value,
+                contact: row.querySelector('.r-contact').value,
+                staff: row.querySelector('.r-staff').value,
+                assets: row.querySelector('.r-assets').value
             }];
             sendDataToScript(payload);
-            closeResourceModal();
         }
 
         function openChecklistModal() { document.getElementById('checklist-modal').classList.remove('hidden'); }
         function closeChecklistModal() { document.getElementById('checklist-modal').classList.add('hidden'); }
         
-        // กู้คืนระบบบันทึกข้อมูล แผนปฏิบัติการ SOP ไปที่คลาวด์ Google Sheets
         function saveSOPToGoogleSheet() {
             const payload = [{
                 pageName: "SOP",
@@ -608,8 +473,6 @@
                 sizeUp: document.getElementById('sop-ch1').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
                 icpSetup: document.getElementById('sop-ch2').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
                 powerCut: document.getElementById('sop-ch3').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
-                waterSource: document.getElementById('sop-ch4').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
-                ritSetup: document.getElementById('sop-ch5').checked ? "ผ่านการตรวจสอบ" : "ยังไม่เสร็จสิ้น",
                 customNotes: document.getElementById('sop-custom-notes').value
             }];
             sendDataToScript(payload);
@@ -667,7 +530,6 @@
             stopSCBAAlarmIfNeeded();
         }
 
-        // กู้คืนระบบบันทึกข้อมูลตารางหลัก SCBA ENTRY CONTROL BOARD ไปยังคลาวด์ Google Sheets
         function saveAllToGoogleSheet() {
             const rows = document.querySelectorAll('#scba-rows tr');
             if(rows.length === 0) { alert("❌ ไม่มีข้อมูลรายชื่อนักดับเพลิงในตาราง"); return; }
