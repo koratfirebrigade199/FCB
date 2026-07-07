@@ -59,7 +59,9 @@
                     <button onclick="undoLastLine()" class="text-[11px] sm:text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
-                    <button onclick="loadHydrantKMZ()" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง</button>
+                    
+                    <input type="file" id="hydrant-file-input" accept=".kmz" class="hidden" onchange="handleHydrantFile(this)">
+                    <button onclick="document.getElementById('hydrant-file-input').click()" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง</button>
                 </div>
             </div>
 
@@ -89,7 +91,7 @@
         <div class="space-y-3 sm:space-y-4 flex flex-col">
             <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 flex-grow flex flex-col">
                 <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
-                    <h2 class="text-sm sm:text-base font-bold text-yellow-400">🚒 ทราพยากร (Check-in)</h2>
+                    <h2 class="text-sm sm:text-base font-bold text-yellow-400">🚒 ทรัพยากร (Check-in)</h2>
                     <button onclick="openResourceModal()" class="text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
                 </div>
                 <div id="resource-list" class="space-y-2 max-h-[300px] lg:max-h-[380px] overflow-y-auto pr-1 flex flex-col">
@@ -211,8 +213,6 @@
         let drawnLines = [];
         let currentLine = null;
         let mapMarkers = {};
-        
-        // หน่วยความจำเก็บข้อมูลหน่วยงาน (เฝ้าติดตามการแก้ไขได้ตลอดเวลา)
         let resourcesData = {};
 
         function updateClock() {
@@ -342,53 +342,50 @@
             window.addEventListener('touchend', endMapDraw, {passive: true});
         }
 
-        // 1. ฟังก์ชันโหลดท่อดับเพลิงจากไฟล์ Fire hydrant.kmz ขึ้นแผนที่
-        function loadHydrantKMZ() {
-            // ดึงไฟล์ Fire hydrant.kmz จากเซิร์ฟเวอร์/ไดร์ฟที่เก็บไฟล์ (ตั้งชื่อให้ตรงกับไฟล์ที่อัปโหลดไว้)
-            fetch('Fire hydrant.kmz')
-            .then(res => {
-                if(!res.ok) throw new Error("ไม่พบไฟล์ Fire hydrant.kmz");
-                return res.arrayBuffer();
-            })
-            .then(buffer => JSZip.loadAsync(buffer))
-            .then(zip => {
-                // ค้นหาไฟล์ .kml ข้างใน KMZ
-                const kmlFile = Object.keys(zip.files).find(fileName => fileName.endsWith('.kml'));
-                if (!kmlFile) throw new Error("ไม่พบข้อมูล KML ด้านในไฟล์ KMZ");
-                return zip.files[kmlFile].async('string');
-            })
-            .then(kmlText => {
-                // แปลงเนื้อหา KML และพล็อตลงแผนที่โดยเปลี่ยนไอคอนเป็นท่อประปาสีแดง 🚰
-                const parser = new DOMParser();
-                const kmlDom = parser.parseFromString(kmlText, 'text/xml');
-                
-                const hydrantLayer = omnivore.kml.parse(kmlText, null, L.geoJson(null, {
-                    pointToLayer: function (feature, latlng) {
-                        const redHydrantIcon = L.divIcon({
-                            html: '🚰',
-                            className: 'hydrant-icon',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        });
-                        return L.marker(latlng, {icon: redHydrantIcon});
-                    },
-                    onEachFeature: function (feature, layer) {
-                        if (feature.properties && feature.properties.name) {
-                            layer.bindPopup(`<b class="text-black">🚰 จุดท่อดับเพลิง:</b><br><span class="text-xs text-gray-700">${feature.properties.name}</span>`);
-                        } else {
-                            layer.bindPopup(`<b class="text-black">🚰 จุดท่อประปาดับเพลิง</b>`);
-                        }
-                    }
-                })).addTo(map);
+        // ส่วนปรับปรุงแก้ไข: ฟังก์ชันรับไฟล์ระดับ Local ป้องกัน Error ทุกชนิดและรองรับทุกอุปกรณ์
+        function handleHydrantFile(input) {
+            const file = input.files[0];
+            if (!file) return;
 
-                // ซูมแผนที่ให้อยู่ในกลุ่มจุดท่อดับเพลิงทั้งหมด
-                map.fitBounds(hydrantLayer.getBounds());
-                alert("✅ โหลดพิกัดท่อดับเพลิงสีแดงเรียบร้อยแล้ว!");
-            })
-            .catch(err => {
-                console.error(err);
-                alert("❌ ผิดพลาด: ไม่สามารถอ่านไฟล์ Fire hydrant.kmz ได้ (กรุณาตรวจสอบว่าวางไฟล์ในโฟลเดอร์เดียวกันหรือระบุ URL ถูกต้อง)");
-            });
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                
+                JSZip.loadAsync(arrayBuffer)
+                .then(zip => {
+                    const kmlFile = Object.keys(zip.files).find(fileName => fileName.endsWith('.kml'));
+                    if (!kmlFile) throw new Error("ไม่พบข้อมูลพิกัด KML ภายในไฟล์ KMZ");
+                    return zip.files[kmlFile].async('string');
+                })
+                .then(kmlText => {
+                    const hydrantLayer = omnivore.kml.parse(kmlText, null, L.geoJson(null, {
+                        pointToLayer: function (feature, latlng) {
+                            const redHydrantIcon = L.divIcon({
+                                html: '🚰',
+                                className: 'hydrant-icon',
+                                iconSize: [24, 24],
+                                iconAnchor: [12, 12]
+                            });
+                            return L.marker(latlng, {icon: redHydrantIcon});
+                        },
+                        onEachFeature: function (feature, layer) {
+                            if (feature.properties && feature.properties.name) {
+                                layer.bindPopup(`<b class="text-black">🚰 จุดท่อดับเพลิง:</b><br><span class="text-xs text-gray-700">${feature.properties.name}</span>`);
+                            } else {
+                                layer.bindPopup(`<b class="text-black">🚰 จุดท่อประปาดับเพลิง</b>`);
+                            }
+                        }
+                    })).addTo(map);
+
+                    map.fitBounds(hydrantLayer.getBounds());
+                    alert("✅ โหลดพิกัดจุดท่อดับเพลิงสีแดงเรียบร้อยแล้ว!");
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("❌ ไม่สามารถแตกไฟล์ KMZ ได้ กรุณาตรวจสอบว่าเป็นไฟล์ที่ถูกต้อง");
+                });
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function toggleMapInteraction() {
@@ -448,7 +445,6 @@
                 map.removeLayer(mapMarkers[markerId]);
                 delete mapMarkers[markerId];
             }
-            // หากเป็นกลุ่มทรัพยากร ให้ลบกล่องรายชื่อด้านข้างด้วย
             const sideBox = document.getElementById(markerId);
             if(sideBox) sideBox.remove();
             if(resourcesData[markerId]) delete resourcesData[markerId];
@@ -481,11 +477,9 @@
             }
         }
 
-        // 2. ระบบโมดอลจัดเก็บและอัปเดตข้อมูลทรัพยากร
         function openResourceModal(existingId = null) {
             document.getElementById('resource-modal').classList.remove('hidden');
             if(existingId && resourcesData[existingId]) {
-                // โหมดแก้ไขข้อมูลที่มีอยู่เดิม
                 document.getElementById('modal-res-title').textContent = "✏️ แก้ไขข้อมูลหน่วยงาน";
                 document.getElementById('modal-res-id').value = existingId;
                 document.getElementById('m-r-agency').value = resourcesData[existingId].agency;
@@ -494,7 +488,6 @@
                 document.getElementById('m-r-staff').value = resourcesData[existingId].staff;
                 document.getElementById('m-r-assets').value = resourcesData[existingId].assets;
             } else {
-                // โหมดสร้างข้อมูลหน่วยงานใหม่
                 document.getElementById('modal-res-title').textContent = "🚒 เพิ่มข้อมูลหน่วยงาน";
                 document.getElementById('modal-res-id').value = "res_" + Date.now();
                 document.getElementById('m-r-agency').value = "";
@@ -509,7 +502,6 @@
             document.getElementById('resource-modal').classList.add('hidden');
         }
 
-        // เมื่อกดปุ่ม "ส่งลงแผนที่" จากหน้า Pop-up
         function executeDeployResource() {
             const id = document.getElementById('modal-res-id').value;
             const agency = document.getElementById('m-r-agency').value || "ไม่ระบุหน่วยงาน";
@@ -518,14 +510,11 @@
             const staff = document.getElementById('m-r-staff').value || "0";
             const assets = document.getElementById('m-r-assets').value || "-";
 
-            // บันทึกความเปลี่ยนแปลงลง Memory object
             resourcesData[id] = { agency, commander, contact, staff, assets };
 
-            // จัดการอัปเดตกล่องรายชื่อย่อในแถบช่องทรัพยากร (Check-in)
             let sideBox = document.getElementById(id);
             if (!sideBox) {
                 sideBox = document.createElement('div');
-                id.id = id;
                 sideBox.id = id;
                 document.getElementById('resource-list').appendChild(sideBox);
             }
@@ -537,7 +526,6 @@
                 <button onclick="removeMapMarker('${id}')" class="text-gray-500 hover:text-red-500 ml-2 font-bold px-1">✕</button>
             `;
 
-            // ส่วนจัดการพล็อตหรืออัปเดตตัว Marker บนแผนที่
             let marker = mapMarkers[id];
             if(!marker) {
                 const centerBounds = map.getCenter();
@@ -546,14 +534,11 @@
                 mapMarkers[id] = marker;
             }
 
-            // ทำการผูก Popup ตัวแปรที่สามารถกดคลิกเพื่อเข้าไปเปิดหน้าแก้ไขผ่าน Pop-up ใหญ่ได้ตลอดเวลา
             updateMarkerPopup(id, marker);
-            
             closeResourceModal();
             if (isDrawMode) toggleMapInteraction();
         }
 
-        // ฟังก์ชันอัปเดต Popup บนแผนที่ให้อัปเดตตามชุดข้อมูลล่าสุดเสมอ
         function updateMarkerPopup(id, marker) {
             const data = resourcesData[id];
             const displayAssets = data.assets.replace(/\n/g, "<br>");
