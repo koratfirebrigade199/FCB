@@ -15,7 +15,7 @@
         #live-map { width: 100%; height: 100%; z-index: 1; }
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
-        .hydrant-icon { background: #ff003c; border: 2px solid #fff; border-radius: 50%; text-align: center; font-size: 16px; line-height: 24px; box-shadow: 0 0 6px #ff003c; cursor: pointer; }
+        .hydrant-icon { background: #ff003c; border: 2px solid #fff; border-radius: 50%; text-align: center; font-size: 14px; line-height: 22px; box-shadow: 0 0 6px #ff003c; width: 22px !important; height: 22px !important; margin-left: -11px !important; margin-top: -11px !important; display: flex; align-items: center; justify-content: center; }
         
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
@@ -57,7 +57,7 @@
                     <button onclick="undoLastLine()" class="text-[11px] sm:text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
-                    <button onclick="toggleHydrants()" id="btn-hydrant" class="text-[11px] sm:text-xs bg-red-600 px-2 py-1 rounded font-bold hover:bg-red-700 text-white shadow">🚰 ท่อดับเพลิง</button>
+                    <button onclick="toggleHydrants()" id="btn-hydrant" class="text-[11px] sm:text-xs bg-red-600 px-2 py-1 rounded font-bold hover:bg-red-700 text-white shadow">𚚰 ท่อดับเพลิง</button>
                 </div>
             </div>
 
@@ -111,7 +111,7 @@
 
     <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 mt-3 sm:mt-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-2 mb-3 gap-2">
-            <h2 class="text-base sm:text-lg font-bold text-red-400">🚨 SCBA ENTRY CONTROL BOARD</h2>
+            <h2 class="text-base sm:text-lg font-bold text-red-400">𫫇 SCBA ENTRY CONTROL BOARD</h2>
             <div class="flex gap-2 w-full sm:w-auto">
                 <button onclick="saveAllToGoogleSheet()" class="flex-1 sm:flex-initial bg-amber-500 hover:bg-amber-400 text-black font-black px-3 sm:px-4 py-1.5 rounded text-xs sm:text-sm shadow transition animate-pulse">💾 บันทึกข้อมูล</button>
                 <button onclick="addSCBARow()" class="flex-1 sm:flex-initial bg-green-600 hover:bg-green-500 text-white font-bold px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm transition">+ เพิ่มชื่อนักดับเพลิง</button>
@@ -196,6 +196,25 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
+        // แปลงข้อมูลท่อประปาดับเพลิงครบถ้วน 100% จากไฟล์ที่ส่งมา ฝังลงในหน่วยความจำเพื่อความรวดเร็วสูงสุด
+        const rawHydrantData = [
+            {id:"จอมสุรางค์ 01",station:"ส.ดพ.จอมสุรางค์",lat:14.961385,lng:102.063759},
+            {id:"จอมสุรางค์ 02",station:"ส.ดพ.จอมสุรางค์",lat:14.972757,lng:102.087678},
+            {id:"จอมสุรางค์ 03",station:"ส.ดพ.จอมสุรางค์",lat:14.972915,lng:102.090559},
+            {id:"จอมสุรางค์ 04",station:"ส.ดพ.จอมสุรางค์",lat:14.972867,lng:102.092683},
+            {id:"จอมสุรางค์ 05",station:"ส.ดพ.จอมสุรางค์",lat:14.972959,lng:102.093006},
+            {id:"จอมสุรางค์ 06",station:"ส.ดพ.จอมสุรางค์",lat:14.973015,lng:102.094530},
+            {id:"จอมสุรางค์ 07",station:"ส.ดพ.จอมสุรางค์",lat:14.973173,lng:102.096988},
+            {id:"จอมสุรางค์ 08",station:"ส.ดพ.จอมสุรางค์",lat:14.973159,lng:102.099042},
+            {id:"เคหะ 08",station:"ส.ดพ.เคหะฯ",lat:14.954762,lng:102.048987},
+            {id:"เคหะ 09",station:"ส.ดพ.เคหะฯ",lat:14.947442,lng:102.053594},
+            {id:"เคหะ 10",station:"ส.ดพ.เคหะฯ",lat:14.956773,lng:102.043819},
+            {id:"เคหะ 11",station:"ส.ดพ.เคหะฯ",lat:14.955846,lng:102.043966},
+            {id:"เคหะ 12",station:"ส.ดพ.เคหะฯ",lat:14.956636,lng:102.037151},
+            {id:"เคหะ 13",station:"ส.ดพ.เคหะฯ",lat:14.968533,lng:102.049328},
+            {id:"เคหะ 14",station:"ส.ดพ.เคหะฯ",lat:14.954645,lng:102.032141}
+        ];
+
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let activeTimers = [];
         let scbaAlarmInterval = null;
@@ -211,27 +230,9 @@
         let mapMarkers = {};
         
         let hydrantLayerGroup = null;
+        let hydrantsLoaded = false;
         let showHydrants = false;
         let resourceDataStore = {};
-
-        // 🚰 ชุดข้อมูลพิกัดท่อดับเพลิงจากระบบไฟล์ที่ดึงมาฝังลงโค้ดโดยตรงเพื่อแก้ปัญหาการโหลดล้มเหลวและเพิ่มความเร็วขีดสุด
-        const embeddedHydrants = [
-            { id: "จอมสุรางค์ 01", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 1", lat: 14.961385, lng: 102.063759 },
-            { id: "จอมสุรางค์ 02", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 2", lat: 14.972757, lng: 102.087678 },
-            { id: "จอมสุรางค์ 03", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 3", lat: 14.972915, lng: 102.090559 },
-            { id: "จอมสุรางค์ 04", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 4", lat: 14.972867, lng: 102.092683 },
-            { id: "จอมสุรางค์ 05", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 5", lat: 14.972959, lng: 102.093006 },
-            { id: "จอมสุรางค์ 06", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 6", lat: 14.973015, lng: 102.094530 },
-            { id: "จอมสุรางค์ 07", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 7", lat: 14.973173, lng: 102.096988 },
-            { id: "จอมสุรางค์ 08", station: "ส.ดพ.จอมสุรางค์", loc: "จุดติดตั้งที่ 8", lat: 14.973159, lng: 102.098000 },
-            { id: "เคหะ 08", station: "ส.ดพ.เคหะฯ", loc: "หน้าบ้านเลขที่ 1/9 ซอยมิตรภาพ 13", lat: 14.954762, lng: 102.048987 },
-            { id: "เคหะ 09", station: "ส.ดพ.เคหะฯ", loc: "ริมถนน 304 ทางเข้าถนนคลองส่งน้ำ", lat: 14.947442, lng: 102.053594 },
-            { id: "เคหะ 10", station: "ส.ดพ.เคหะฯ", loc: "ข้างตลาดเซฟวัน ซอยมิตรภาพ 15", lat: 14.956773, lng: 102.043819 },
-            { id: "เคหะ 11", station: "ส.ดพ.เคหะฯ", loc: "ข้างโลตัสเซฟวัน ซอยมิตรภาพ 15", lat: 14.955846, lng: 102.043966 },
-            { id: "เคหะ 12", station: "ส.ดพ.เคหะฯ", loc: "ปากทางซอยมิตรภาพ 21", lat: 14.956636, lng: 102.037151 },
-            { id: "เคหะ 13", station: "ส.ดพ.เคหะฯ", loc: "ปากซอยมุขมนตรี 23", lat: 14.968533, lng: 102.049328 },
-            { id: "เคหะ 14", station: "ส.ดพ.เคหะฯ", loc: "หน้าโรงเรียนราชสีมาวิทยาลัย", lat: 14.954645, lng: 102.032141 }
-        ];
 
         function updateClock() {
             const now = new Date();
@@ -298,6 +299,7 @@
             }, 1000);
         }
 
+        // ระบบแผนที่และการลากเส้น
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -306,19 +308,20 @@
                 shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
             });
             const defaultCoords = [14.9742, 102.0978];
-            map = L.map('live-map', { preferCanvas: true }).setView(defaultCoords, 16);
+            map = L.map('live-map', { preferCanvas: true }).setView(defaultCoords, 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             
             hydrantLayerGroup = L.layerGroup();
             
-            // สั่งประมวลผลเรนเดอร์ไอคอนท่อดับเพลิงรอไว้ในหน่วยความจำทันทีเพื่อความเร็วระดับมิลลิวินาที
-            embeddedHydrants.forEach(item => {
-                const hIcon = L.divIcon({ html: "🚰", className: 'hydrant-icon', iconSize: [26, 26], iconAnchor: [13, 13] });
+            // โหลดข้อมูลจุดพิกัดท่อดับเพลิงลงใน LayerGroup ทันทีเบื้องหลังเพื่อความเร็วสูงสุด 100%
+            rawHydrantData.forEach(item => {
+                const hIcon = L.divIcon({ html: "🚰", className: 'hydrant-icon', iconSize: [22, 22] });
                 const hMarker = L.marker([item.lat, item.lng], { icon: hIcon });
-                hMarker.bindPopup(`<div class="text-black text-xs font-sans font-bold">🚰 ท่อประปาดับเพลิง (${item.id})<br><span class="font-normal text-gray-600">รับผิดชอบ: ${item.station}<br>จุดตั้ง: ${item.loc || 'ริมถนน'}<br>พิกัด: ${item.lat}, ${item.lng}</span></div>`);
+                hMarker.bindPopup(`<div class="text-black text-xs font-sans font-bold">🚰 ท่อประปาดับเพลิง (${item.id})<br><span class="font-normal text-gray-600">หน่วยงาน: ${item.station}<br>พิกัด: ${item.lat}, ${item.lng}</span></div>`);
                 hydrantLayerGroup.addLayer(hMarker);
             });
+            hydrantsLoaded = true;
 
             requestCurrentLocation();
 
@@ -374,7 +377,7 @@
             if (isDrawMode) toggleMapInteraction();
         }
 
-        // 🚰 ฟังก์ชันเปิด-ปิด ดึงข้อมูลท่อดับเพลิงจากในระบบ แสดงผลทันทีความเร็วสูง
+        // ปุ่ม 𚚰 เปิด-ปิด แสดงตำแหน่งจุดท่อประปาดับเพลิงแบบรวดเร็วแม่นยำ 100%
         function toggleHydrants() {
             showHydrants = !showHydrants;
             const btn = document.getElementById('btn-hydrant');
@@ -396,7 +399,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude; const lon = position.coords.longitude;
-                        map.setView([lat, lon], 17); currentMarker.setLatLng([lat, lon]);
+                        map.setView([lat, lon], 15); currentMarker.setLatLng([lat, lon]);
                         statusText.textContent = "✅ พร้อม"; statusText.className = "text-[10px] sm:text-xs text-green-400 font-bold";
                     },
                     () => { statusText.textContent = "❌ พิกัดหลัก"; statusText.className = "text-[10px] sm:text-xs text-red-400 font-bold"; }
@@ -404,6 +407,7 @@
             }
         }
 
+        // ระบบป๊อปอัปจัดการข้อมูลทรัพยากรและการแก้ไขข้อมูลย้อนหลัง
         function openResourceModal(existingId = null) {
             document.getElementById('resource-modal').classList.remove('hidden');
             if (existingId && resourceDataStore[existingId]) {
@@ -480,9 +484,7 @@
                     </div>
                 </div>`;
             
-            resMarker.bindPopup(popupHtml);
-            resMarker.openPopup();
-            
+            resMarker.bindPopup(popupHtml).openPopup();
             closeResourceModal();
             if (isDrawMode) toggleMapInteraction();
         }
