@@ -7,6 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
+
     <style>
         .neon-banner { background-color: #ff003c; box-shadow: 0 0 20px #ff003c, inset 0 0 10px rgba(255,255,255,0.3); text-shadow: 0 0 8px rgba(255,255,255,0.8); }
         .neon-text-yellow { color: #ccff00; text-shadow: 0 0 10px rgba(204,255,0,0.6); }
@@ -56,6 +60,9 @@
                     <button onclick="undoLastLine()" class="text-[11px] sm:text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
+                    
+                    <input type="file" id="hydrant-file-input" accept=".kmz" class="hidden" onchange="handleHydrantUpload(event)">
+                    <button onclick="document.getElementById('hydrant-file-input').click()" class="text-[11px] sm:text-xs bg-red-600 px-2 py-1 rounded font-bold hover:bg-red-500 text-white flex items-center gap-1 shadow-md">🚰 Hydrant</button>
                 </div>
             </div>
 
@@ -179,7 +186,6 @@
         }
         setInterval(updateClock, 1000);
 
-        // 🔊 ระบบกริ่งไซเรนเตือนภัยแบบยาวต่อเนื่อง
         function triggerSirenSound(mode) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             let nowTime = audioCtx.currentTime;
@@ -278,7 +284,6 @@
             }, 1000);
         }
 
-        // 🗺️ ระบบแผนที่และการวาดเส้นประสิทธิภาพสูง (รองรับ Touch Devices/iPad)
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -296,7 +301,6 @@
             map.on('mousemove', duringMapDraw);
             window.addEventListener('mouseup', endMapDraw);
             
-            // เพิ่มการดักจับของอุปกรณ์หน้าจอสัมผัส (Tablet / iPad) แบบ Passive
             map.on('touchstart', (e) => { if(isDrawMode) startMapDraw(e); }, {passive: true});
             map.on('touchmove', (e) => { if(isDrawMode) duringMapDraw(e); }, {passive: true});
             window.addEventListener('touchend', endMapDraw, {passive: true});
@@ -324,7 +328,6 @@
 
         function duringMapDraw(e) {
             if (!isDrawMode || !currentLine) return;
-            // Throttling ป้องกันประมวลผลพิกัดถี่เกินไปบน iPad/Tablet ช่วยลดอาการหน่วงกระตุก
             const now = performance.now();
             if (now - lastDrawTime < 16) return; 
             lastDrawTime = now;
@@ -372,6 +375,67 @@
 
             marker.bindPopup(`<div class="text-black text-xs font-bold font-sans"><p class="mb-1">${labelName}</p><button onclick="removeMapMarker('${markerId}')" class="w-full bg-red-600 text-white text-[10px] p-1 rounded font-bold">✕ ลบไอคอน</button></div>`);
             if (isDrawMode) toggleMapInteraction();
+        }
+
+        // ฟังก์ชันใหม่: สำหรับอัปโหลดและประมวลผลไฟล์ KMZ เพื่อแสดงจุดหัวรับน้ำดับเพลิง (Fire Hydrant)
+        function handleHydrantUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // ใช้ JSZip เปิดไฟล์ .kmz เพื่อหาไฟล์พิกัด doc.kml ด้านใน
+                JSZip.loadAsync(e.target.result).then(function(zip) {
+                    const kmlFile = zip.file("doc.kml");
+                    if (!kmlFile) {
+                        alert("❌ ไม่พบไฟล์ข้อมูล KML ภายในแพลตฟอร์ม KMZ นี้");
+                        return;
+                    }
+                    return kmlFile.async("string");
+                }).then(function(kmlText) {
+                    if (!kmlText) return;
+
+                    const parser = new DOMParser();
+                    const kmlDom = parser.parseFromString(kmlText, "text/xml");
+                    
+                    // สร้าง Layer ของ KML นำเข้าสู่ Leaflet
+                    const kmlLayer = new L.KML(kmlDom);
+                    
+                    // ปรับแต่งไอคอนของจุด Hydrant ทั้งหมดให้เป็นรูปท่อประปาดับเพลิงสีแดง 🚰 ตกแต่งด้วย CSS ขอบแดง
+                    kmlLayer.eachLayer(function(layer) {
+                        if (layer instanceof L.Marker) {
+                            const hydrantIcon = L.divIcon({
+                                html: '🚰',
+                                className: 'tactical-icon !border-red-600 !text-red-500',
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 16]
+                            });
+                            layer.setIcon(hydrantIcon);
+                            
+                            // ผูกระบบปุ่มลบไอคอนรายจุดกรณีต้องการเคลียร์จุดแสดงผล
+                            const markerId = "hydrant_" + Date.now() + Math.random().toString(36).substring(2, 5);
+                            mapMarkers[markerId] = layer;
+                            
+                            const currentPopup = layer.getPopup();
+                            const contentStr = currentPopup ? currentPopup.getContent() : "จุดท่อประปาดับเพลิง";
+                            layer.bindPopup(`<div class="text-black text-xs font-sans"><b>📌 พิกัดหัวรับน้ำดับเพลิง</b><br>${contentStr}<br><button onclick="removeMapMarker('${markerId}')" class="w-full bg-red-600 text-white text-[10px] p-1 rounded font-bold mt-1">✕ ลบไอคอน</button></div>`);
+                        }
+                    });
+
+                    map.addLayer(kmlLayer);
+                    
+                    // เลื่อนหน้าจอแผนที่โฟกัสไปยังกลุ่มของจุดพิกัด Hydrant ที่ดึงเข้ามาทันที
+                    const bounds = kmlLayer.getBounds();
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds);
+                    }
+                    alert("✅ นำเข้าข้อมูลจุดท่อประปาดับเพลิงสำเร็จ!");
+                }).catch(function(err) {
+                    console.error(err);
+                    alert("❌ เกิดข้อผิดพลาดในการประมวลผลไฟล์ KMZ");
+                });
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function requestCurrentLocation() {
