@@ -17,8 +17,8 @@
         #live-map { width: 100%; height: 100%; z-index: 1; }
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
-        /* สไตล์ของไอคอนท่อดับเพลิงสีแดง */
-        .hydrant-icon { font-size: 24px; text-align: center; line-height: 24px; text-shadow: 0 0 6px #ff0000, 0 0 3px #000; }
+        /* สไตล์พิเศษสำหรับไอคอนท่อดับเพลิงสีแดง */
+        .hydrant-icon { font-size: 26px; text-align: center; line-height: 26px; text-shadow: 0 0 6px #ff0000, 0 0 3px #000; filter: drop-shadow(0px 0px 4px red); }
         
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
@@ -51,7 +51,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
         <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 space-y-3 sm:space-y-4 flex flex-col lg:col-span-2">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-2 gap-2">
-                <h2 class="text-sm sm:text-base font-bold text-yellow-400 flex items-center gap-2">🎨 แผนที่ปฏิบัติการ <span id="gps-status" class="text-[10px] sm:text-xs text-gray-400 font-normal"></span></h2>
+                <h2 class="text-sm sm:text-base font-bold text-yellow-400 flex items-center gap-2">🎨 แंधनที่ปฏิบัติการ <span id="gps-status" class="text-[10px] sm:text-xs text-gray-400 font-normal"></span></h2>
                 <div class="flex flex-wrap gap-1.5 items-center">
                     <button onclick="setPenColor('#ef4444')" class="w-5 h-5 sm:w-6 h-6 rounded-full bg-red-500 border-2 border-white" title="สีแดง"></button>
                     <button onclick="setPenColor('#3b82f6')" class="w-5 h-5 sm:w-6 h-6 rounded-full bg-blue-500" title="สีน้ำเงิน"></button>
@@ -61,7 +61,7 @@
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
                     
-                    <button onclick="loadHydrantsFromGoogleSheet()" id="btn-hydrant-sheet" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง</button>
+                    <button onclick="loadHydrantsFromGoogleSheet()" id="btn-hydrant" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md transition-all active:scale-95">🚰 ท่อดับเพลิง</button>
                 </div>
             </div>
 
@@ -215,7 +215,7 @@
         let mapMarkers = {};
         let resourcesData = {};
         
-        // เพิ่มตัวแปรสำหรับเก็บกลุ่มจุดท่อประปาดับเพลิงแยก Layer
+        // ตัวแปรกลุ่ม Layer เพื่อแยกจัดการหมุดจุดท่อดับเพลิงออกจากหมุดเดิม
         let hydrantLayerGroup = null;
 
         function updateClock() {
@@ -336,54 +336,62 @@
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             requestCurrentLocation();
 
-            // กำหนดสิทธิ์ให้กลุ่มเลเยอร์ท่อดับเพลิงทำงานร่วมกับแผนที่
+            // ลงทะเบียนเลเยอร์กลุ่มท่อดับเพลิงบนแผนที่
             hydrantLayerGroup = L.layerGroup().addTo(map);
 
-            map.on('mousedown', startMapDraw);
-            map.on('mousemove', duringMapDraw);
-            window.addEventListener('mouseup', endMapDraw);
+            // ส่วนแก้ไขข้อที่ 2: ผูกระบบ Event Handlers ตัวดักจับพิกัดวาดเส้นอย่างถูกต้องเพื่อคืนคุณสมบัติการวาดเส้นเดิม
+            map.on('mousedown', (e) => { if(isDrawMode) startMapDraw(e); });
+            map.on('mousemove', (e) => { if(isDrawMode) duringMapDraw(e); });
+            window.addEventListener('mouseup', () => { if(isDrawMode) endMapDraw(); });
             
-            map.on('touchstart', (e) => { if(isDrawMode) startMapDraw(e); }, {passive: true});
-            map.on('touchmove', (e) => { if(isDrawMode) duringMapDraw(e); }, {passive: true});
-            window.addEventListener('touchend', endMapDraw, {passive: true});
+            map.on('touchstart', (e) => { if(isDrawMode) { L.DomEvent.stopPropagation(e); startMapDraw(e); } });
+            map.on('touchmove', (e) => { if(isDrawMode) { L.DomEvent.stopPropagation(e); duringMapDraw(e); } });
+            window.addEventListener('touchend', () => { if(isDrawMode) endMapDraw(); });
         }
 
-        // เพิ่มฟังก์ชันดึงข้อมูลพิกัดท่อประปาดับเพลิงจากหน้าเพจ Fire Hydrant ผ่าน Apps Script URL 
+        // ฟังชั่นเพิ่มใหม่ข้อที่ 1: ดึงพิกัดจาก Google Sheets (หน้า Fire Hydrant) มาแสดงผลเป็นไอคอนท่อดับเพลิงสีแดง 🚰
         function loadHydrantsFromGoogleSheet() {
-            const btn = document.getElementById('btn-hydrant-sheet');
+            const btn = document.getElementById('btn-hydrant');
             const originalText = btn.textContent;
-            btn.textContent = "⏳ โหลดข้อมูล...";
+            btn.textContent = "⏳ กำลังโหลด...";
             btn.disabled = true;
 
-            // ยิง Request แบบ GET ไปหา Google Apps Script เดิมเพื่อรับโครงสร้างพิกัด JSON
+            // ส่ง Request ไปเรียกข้อมูลผ่าน API สคริปต์หลังบ้าน Google Drive
             fetch(`${GOOGLE_SCRIPT_URL}?action=getHydrants`)
             .then(response => response.json())
             .then(data => {
                 if (data && data.status === "success" && data.hydrants && data.hydrants.length > 0) {
-                    hydrantLayerGroup.clearLayers(); // เคลียร์จุดเก่าออกก่อนพล็อตใหม่กันซ้อนหมุด
+                    hydrantLayerGroup.clearLayers(); // ล้างหมุดเกิมบนเลเยอร์ป้องกันหมุดแสดงซ้อนกัน
                     
                     const redHydrantIcon = L.divIcon({
                         html: '🚰',
                         className: 'hydrant-icon',
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 13]
                     });
 
                     data.hydrants.forEach(item => {
                         if (item.latitude && item.longitude) {
                             const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: redHydrantIcon });
-                            marker.bindPopup(`<div class="text-black text-xs font-sans"><b>🚰 จุดท่อประปาดับเพลิง</b><br>${item.name || 'ไม่มีระบุชื่อจุด'}</div>`);
+                            marker.bindPopup(`
+                                <div class="text-black text-xs font-sans p-1">
+                                    <b class="text-red-600 text-sm">🚰 จุดท่อประปาดับเพลิง</b><br>
+                                    <b>รหัส/ID:</b> ${item.id || '-'}<br>
+                                    <b>ที่ตั้งละเอียด:</b> ${item.location || '-'}<br>
+                                    <b>หน่วยงานดูแล:</b> ${item.agency || '-'}
+                                </div>
+                            `);
                             hydrantLayerGroup.addLayer(marker);
                         }
                     });
-                    alert(`✅ ดึงข้อมูลสำเร็จ! พล็อตพิกัดท่อประปาดับเพลิงทั้งหมด ${data.hydrants.length} จุดเรียบร้อย`);
+                    alert(`✅ โหลดข้อมูลสำเร็จ! พล็อตจุดท่อประปาดับเพลิงจำนวน ${data.hydrants.length} จุดลงแผนที่เรียบร้อย`);
                 } else {
-                    alert("⚠️ ดึงข้อมูลสำเร็จ แต่ข้อมูลพิกัดในหน้าชีต Fire Hydrant ว่างเปล่า");
+                    alert("⚠️ ดึงข้อมูลสำเร็จ แต่ไม่พบรายการข้อมูลพิกัดในเพจ Fire Hydrant หรือข้อมูลว่างเปล่า");
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert("❌ เกิดข้อผิดพลาด ไม่สามารถดึงข้อมูลท่อประปาดับเพลิงจากระบบคลาวด์ได้");
+                alert("❌ ไม่สามารถเชื่อมต่อฐานข้อมูลคลาวด์ได้ กรุณาตรวจสอบการตั้งค่าสิทธิ์แชร์หรือ Apps Script");
             })
             .finally(() => {
                 btn.textContent = originalText;
@@ -407,16 +415,17 @@
 
         let lastDrawTime = 0;
         function startMapDraw(e) {
-            if (!isDrawMode) return;
-            currentLine = L.polyline([e.latlng], { color: penColor, weight: 4, opacity: 0.85 }).addTo(map);
+            const latlng = e.latlng || map.mouseEventToLatLng(e.touches ? e.touches[0] : e);
+            currentLine = L.polyline([latlng], { color: penColor, weight: 4, opacity: 0.85 }).addTo(map);
         }
 
         function duringMapDraw(e) {
-            if (!isDrawMode || !currentLine) return;
+            if (!currentLine) return;
             const now = performance.now();
             if (now - lastDrawTime < 16) return; 
             lastDrawTime = now;
-            currentLine.addLatLng(e.latlng);
+            const latlng = e.latlng || map.mouseEventToLatLng(e.touches ? e.touches[0] : e);
+            currentLine.addLatLng(latlng);
         }
 
         function endMapDraw() {
