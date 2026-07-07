@@ -59,7 +59,7 @@
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
                     
-                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">🚰 ท่อดับเพลิง (ปิด)</button>
+                    <button onclick="toggleFireHydrantsLayer()" id="btn-hydrant-toggle" class="text-[11px] sm:text-xs bg-red-600 text-white px-2 py-1 rounded font-bold hover:bg-red-500 flex items-center gap-1 shadow-md">💧 ท่อดับเพลิง (ปิด)</button>
                 </div>
             </div>
 
@@ -351,11 +351,11 @@
             
             if (isHydrantVisible) {
                 map.removeLayer(hydrantLayerGroup);
-                btn.textContent = "𚚰 ท่อดับเพลิง (ปิด)";
+                btn.textContent = "💧 ท่อดับเพลิง (ปิด)";
                 isHydrantVisible = false;
             } else {
                 map.addLayer(hydrantLayerGroup);
-                btn.textContent = "𚚰 ท่อดับเพลิง (เปิด)";
+                btn.textContent = "💧 ท่อดับเพลิง (เปิด)";
                 isHydrantVisible = true;
                 
                 if (!hasLoadedHydrants) {
@@ -386,7 +386,7 @@
                     data.hydrants.forEach(item => {
                         if (item.latitude && item.longitude) {
                             const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: customHydrantIcon });
-                            marker.bindPopup(`<div class="text-black text-xs font-sans"><b>𚚰 จุดท่อประปาดับเพลิง</b><br>ID/สถานที่: ${item.name || 'ไม่ระบุ'}</div>`);
+                            marker.bindPopup(`<div class="text-black text-xs font-sans"><b>💧 จุดท่อประปาดับเพลิง</b><br>ID/สถานที่: ${item.name || 'ไม่ระบุ'}</div>`);
                             hydrantLayerGroup.addLayer(marker);
                         }
                     });
