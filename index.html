@@ -16,13 +16,16 @@
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
         
+        /* สไตล์พิเศษเพื่อป้องกันไม่ให้เบราว์เซอร์รีเฟรชหน้าจอเมื่อลากนิ้วลงบน iPad/มือถือ */
+        #live-map { touch-action: none; -webkit-user-select: none; user-select: none; }
+        
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
         .alert-warning-active { animation: flash-warning 0.8s infinite; will-change: background-color, border-color; }
         .alert-danger-active { animation: flash-danger 0.4s infinite; will-change: background-color, border-color; }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-100 font-sans p-2 sm:p-4 text-xs sm:text-sm md:text-base select-none">
+<body class="bg-gray-950 text-gray-100 font-sans p-2 sm:p-4 text-xs sm:text-sm md:text-base">
 
     <header class="neon-banner p-3 sm:p-4 rounded-t-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b-4 border-yellow-300 relative">
         <div class="flex items-center space-x-3">
@@ -209,7 +212,7 @@
         let mapMarkers = {};
         let resourceDataStore = {};
         
-        let isDrawingNow = false; // ตัวแปรเช็คสถานะการวาดแบบ Realtime
+        let isDrawingNow = false;
 
         function updateClock() {
             const now = new Date();
@@ -276,7 +279,7 @@
             }, 1000);
         }
 
-        // 🎨 ระบบการวาดแผนที่แบบ Multi-touch ปรับปรุงเพื่อ iPad และมือถือสมบูรณ์แบบ
+        // 🎨 ระบบการวาดรูปแบบ PointerEngine ปลดล็อกทุกหน้าจอสัมผัส (iOS / iPadOS / Android)
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -285,9 +288,11 @@
                 shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
             });
             const defaultCoords = [14.9742, 102.0978];
+            
+            // ตั้งค่า Map และปิดการหน่วงเวลาดับเบิลแท็บบนมือถือ (tap: false)
             map = L.map('live-map', { 
                 preferCanvas: true,
-                tap: false // ปิดเพื่อให้ทำงานบนอุปกรณ์ iOS / iPadOS ได้รวดเร็วขึ้นไม่ดีเลย์
+                tap: false
             }).setView(defaultCoords, 15);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -295,12 +300,49 @@
             
             requestCurrentLocation();
 
-            // ดักจับเหตุการณ์ทั้งเมาส์ สัมผัสหน้าจอ และปากกา (Pointer Events) รองรับทุกอุปกรณ์ 100%
-            map.on('mousedown touchstart', startMapDraw);
-            map.on('mousemove touchmove', duringMapDraw);
+            // ดึง Container ของแผนที่เพื่อผูกเข้ากับ Pointer Event โดยตรงไม่ผ่าน Leaflet-Dragging เพื่อบังคับให้วาดติด 100%
+            const mapContainer = document.getElementById('live-map');
             
-            // ปิดเส้นเมื่อยกนิ้วหรือเมาส์ออก
-            map.on('mouseup touchend contextmenu', endMapDraw);
+            mapContainer.addEventListener('pointerdown', (e) => {
+                if (!isDrawMode) return;
+                isDrawingNow = true;
+                // ป้องกันเหตุการณ์เริ่มต้น (เช่น การเลื่อนหน้าจอของเบราว์เซอร์)
+                e.preventDefault();
+                
+                // แปลงพิกัดพิกเซลบนหน้าจอสัมผัสของอุปกรณ์ ให้เป็นพิกัดแผนที่ (Latitude/Longitude)
+                const rect = mapContainer.getBoundingClientRect();
+                const containerPoint = L.point(e.clientX - rect.left, e.clientY - rect.top);
+                const latlng = map.containerPointToLatLng(containerPoint);
+                
+                currentLine = L.polyline([latlng], { color: penColor, weight: 5, opacity: 0.85 }).addTo(map);
+            });
+
+            let lastDrawTime = 0;
+            mapContainer.addEventListener('pointermove', (e) => {
+                if (!isDrawMode || !currentLine || !isDrawingNow) return;
+                e.preventDefault();
+                
+                const now = performance.now();
+                if (now - lastDrawTime < 10) return; // เพิ่มประสิทธิภาพความลื่นไหลระดับ 10ms
+                lastDrawTime = now;
+                
+                const rect = mapContainer.getBoundingClientRect();
+                const containerPoint = L.point(e.clientX - rect.left, e.clientY - rect.top);
+                const latlng = map.containerPointToLatLng(containerPoint);
+                
+                if (latlng) {
+                    currentLine.addLatLng(latlng);
+                }
+            });
+
+            // เมื่อยกนิ้ว, ปากกา หรือยกเมาส์ออก ให้ทำการบันทึกเส้นเข้าอาร์เรย์
+            window.addEventListener('pointerup', () => {
+                if (isDrawingNow && currentLine) {
+                    drawnLines.push(currentLine);
+                    currentLine = null;
+                }
+                isDrawingNow = false;
+            });
         }
 
         function toggleMapInteraction() {
@@ -308,48 +350,19 @@
             const btn = document.getElementById('btn-mode');
             if (isDrawMode) {
                 btn.textContent = "โหมด: ✍️ วาดเส้น"; btn.className = "text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold sm:ml-2";
+                // ปิดฟังก์ชันแผนที่เดิมเพื่อให้วาดบน Tablet/iPad ได้สมบูรณ์
                 map.dragging.disable();
                 map.touchZoom.disable();
                 map.doubleClickZoom.disable();
+                if (map.scrollWheelZoom) map.scrollWheelZoom.disable();
             } else {
                 btn.textContent = "โหมด: 🗺️ เลื่อนแผนที่"; btn.className = "text-[11px] sm:text-xs bg-gray-700 px-2 py-1 rounded font-bold sm:ml-2";
+                // เปิดระบบเลื่อนซูมปกติ
                 map.dragging.enable();
                 map.touchZoom.enable();
                 map.doubleClickZoom.enable();
+                if (map.scrollWheelZoom) map.scrollWheelZoom.enable();
             }
-        }
-
-        function startMapDraw(e) { 
-            if (!isDrawMode) return;
-            isDrawingNow = true;
-            // หาจุดพิกัดจากการกดสัมผัสหรือเมาส์
-            const latlng = e.latlng || map.mouseEventToLatLng(e.originalEvent);
-            currentLine = L.polyline([latlng], { color: penColor, weight: 4, opacity: 0.85 }).addTo(map);
-            
-            if (e.originalEvent && e.originalEvent.preventDefault) {
-                e.originalEvent.preventDefault();
-            }
-        }
-
-        let lastDrawTime = 0;
-        function duringMapDraw(e) {
-            if (!isDrawMode || !currentLine || !isDrawingNow) return;
-            const now = performance.now(); 
-            if (now - lastDrawTime < 12) return; // ควบคุมอัตราการวาดให้ลื่นไหลสม่ำเสมอ
-            lastDrawTime = now;
-            
-            const latlng = e.latlng || map.mouseEventToLatLng(e.originalEvent);
-            if (latlng) {
-                currentLine.addLatLng(latlng);
-            }
-        }
-
-        function endMapDraw() { 
-            if (isDrawingNow && currentLine) { 
-                drawnLines.push(currentLine); 
-                currentLine = null; 
-            }
-            isDrawingNow = false;
         }
 
         function undoLastLine() { if (drawnLines.length > 0) map.removeLayer(drawnLines.pop()); }
