@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Korat City Fire Brigade - Fire Command Board</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -22,7 +22,7 @@
         .alert-danger-active { animation: flash-danger 0.4s infinite; will-change: background-color, border-color; }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-100 font-sans p-2 sm:p-4 text-xs sm:text-sm md:text-base">
+<body class="bg-gray-950 text-gray-100 font-sans p-2 sm:p-4 text-xs sm:text-sm md:text-base select-none">
 
     <header class="neon-banner p-3 sm:p-4 rounded-t-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b-4 border-yellow-300 relative">
         <div class="flex items-center space-x-3">
@@ -208,6 +208,8 @@
         let currentLine = null;
         let mapMarkers = {};
         let resourceDataStore = {};
+        
+        let isDrawingNow = false; // ตัวแปรเช็คสถานะการวาดแบบ Realtime
 
         function updateClock() {
             const now = new Date();
@@ -274,7 +276,7 @@
             }, 1000);
         }
 
-        // ระบบแผนที่และการลากเส้นปฏิบัติการ
+        // 🎨 ระบบการวาดแผนที่แบบ Multi-touch ปรับปรุงเพื่อ iPad และมือถือสมบูรณ์แบบ
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -283,19 +285,22 @@
                 shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
             });
             const defaultCoords = [14.9742, 102.0978];
-            map = L.map('live-map', { preferCanvas: true }).setView(defaultCoords, 15);
+            map = L.map('live-map', { 
+                preferCanvas: true,
+                tap: false // ปิดเพื่อให้ทำงานบนอุปกรณ์ iOS / iPadOS ได้รวดเร็วขึ้นไม่ดีเลย์
+            }).setView(defaultCoords, 15);
+            
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             
             requestCurrentLocation();
 
-            map.on('mousedown', startMapDraw);
-            map.on('mousemove', duringMapDraw);
-            window.addEventListener('mouseup', endMapDraw);
+            // ดักจับเหตุการณ์ทั้งเมาส์ สัมผัสหน้าจอ และปากกา (Pointer Events) รองรับทุกอุปกรณ์ 100%
+            map.on('mousedown touchstart', startMapDraw);
+            map.on('mousemove touchmove', duringMapDraw);
             
-            map.on('touchstart', (e) => { if(isDrawMode) startMapDraw(e); }, {passive: true});
-            map.on('touchmove', (e) => { if(isDrawMode) duringMapDraw(e); }, {passive: true});
-            window.addEventListener('touchend', endMapDraw, {passive: true});
+            // ปิดเส้นเมื่อยกนิ้วหรือเมาส์ออก
+            map.on('mouseup touchend contextmenu', endMapDraw);
         }
 
         function toggleMapInteraction() {
@@ -304,20 +309,49 @@
             if (isDrawMode) {
                 btn.textContent = "โหมด: ✍️ วาดเส้น"; btn.className = "text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold sm:ml-2";
                 map.dragging.disable();
+                map.touchZoom.disable();
+                map.doubleClickZoom.disable();
             } else {
                 btn.textContent = "โหมด: 🗺️ เลื่อนแผนที่"; btn.className = "text-[11px] sm:text-xs bg-gray-700 px-2 py-1 rounded font-bold sm:ml-2";
                 map.dragging.enable();
+                map.touchZoom.enable();
+                map.doubleClickZoom.enable();
+            }
+        }
+
+        function startMapDraw(e) { 
+            if (!isDrawMode) return;
+            isDrawingNow = true;
+            // หาจุดพิกัดจากการกดสัมผัสหรือเมาส์
+            const latlng = e.latlng || map.mouseEventToLatLng(e.originalEvent);
+            currentLine = L.polyline([latlng], { color: penColor, weight: 4, opacity: 0.85 }).addTo(map);
+            
+            if (e.originalEvent && e.originalEvent.preventDefault) {
+                e.originalEvent.preventDefault();
             }
         }
 
         let lastDrawTime = 0;
-        function startMapDraw(e) { if (!isDrawMode) return; currentLine = L.polyline([e.latlng], { color: penColor, weight: 4, opacity: 0.85 }).addTo(map); }
         function duringMapDraw(e) {
-            if (!isDrawMode || !currentLine) return;
-            const now = performance.now(); if (now - lastDrawTime < 16) return; lastDrawTime = now;
-            currentLine.addLatLng(e.latlng);
+            if (!isDrawMode || !currentLine || !isDrawingNow) return;
+            const now = performance.now(); 
+            if (now - lastDrawTime < 12) return; // ควบคุมอัตราการวาดให้ลื่นไหลสม่ำเสมอ
+            lastDrawTime = now;
+            
+            const latlng = e.latlng || map.mouseEventToLatLng(e.originalEvent);
+            if (latlng) {
+                currentLine.addLatLng(latlng);
+            }
         }
-        function endMapDraw() { if (currentLine) { drawnLines.push(currentLine); currentLine = null; } }
+
+        function endMapDraw() { 
+            if (isDrawingNow && currentLine) { 
+                drawnLines.push(currentLine); 
+                currentLine = null; 
+            }
+            isDrawingNow = false;
+        }
+
         function undoLastLine() { if (drawnLines.length > 0) map.removeLayer(drawnLines.pop()); }
         function clearAllLines() { for(let i=0; i<drawnLines.length; i++) map.removeLayer(drawnLines[i]); drawnLines = []; }
         function setPenColor(color) { penColor = color; if (!isDrawMode) toggleMapInteraction(); }
@@ -356,7 +390,7 @@
             }
         }
 
-        // ระบบป๊อปอัปจัดการข้อมูลทรัพยากรและการแก้ไขข้อมูลย้อนหลัง
+        // ระบบทรัพยากร
         function openResourceModal(existingId = null) {
             document.getElementById('resource-modal').classList.remove('hidden');
             if (existingId && resourceDataStore[existingId]) {
@@ -396,7 +430,7 @@
                 resourceDataStore[existingId] = { agency, commander, contact, staff, assets };
                 resMarker = mapMarkers[existingId];
                 const cardTitle = document.querySelector(`#card_${existingId} .card-title`);
-                if (cardTitle) cardTitle.textContent = `🚒 ${agency} (${staff} คน)`;
+                if (cardTitle) cardTitle.textContent = `🚒 ${agency} (${staff} คน) `;
             } else {
                 markerId = "resource_" + Date.now() + Math.random().toString(36).substring(2, 5);
                 resourceDataStore[markerId] = { agency, commander, contact, staff, assets };
