@@ -15,7 +15,6 @@
         #live-map { width: 100%; height: 100%; z-index: 1; }
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
-        .hydrant-icon { background: #ff003c; border: 2px solid #fff; border-radius: 50%; text-align: center; font-size: 14px; line-height: 22px; box-shadow: 0 0 6px #ff003c; width: 22px !important; height: 22px !important; margin-left: -11px !important; margin-top: -11px !important; display: flex; align-items: center; justify-content: center; }
         
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
         @keyframes flash-danger { 0%, 100% { background-color: rgba(220, 38, 38, 0.1); border-color: #ff003c; } 50% { background-color: rgba(255, 0, 60, 0.9); border-color: #ffffff; color: white; font-weight: 900; } }
@@ -57,7 +56,6 @@
                     <button onclick="undoLastLine()" class="text-[11px] sm:text-xs bg-amber-700 px-2 py-1 rounded font-bold hover:bg-amber-600">↩️ ลบเส้นล่าสุด</button>
                     <button onclick="clearAllLines()" class="text-[11px] sm:text-xs bg-red-800 px-2 py-1 rounded font-bold hover:bg-red-700">🗑️ ล้างเส้น</button>
                     <button onclick="requestCurrentLocation()" class="text-[11px] sm:text-xs bg-amber-600 px-2 py-1 rounded font-bold hover:bg-amber-500">📍 GPS</button>
-                    <button onclick="toggleHydrants()" id="btn-hydrant" class="text-[11px] sm:text-xs bg-red-600 px-2 py-1 rounded font-bold hover:bg-red-700 text-white shadow">𚚰 ท่อดับเพลิง</button>
                 </div>
             </div>
 
@@ -196,25 +194,6 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_TYOqjjbu5IUT3NP1nJit6MvN9Foymy7q2eTEtUPXvNyVTpCEO7j8wZoRKKWkhUVZ9Q/exec";
 
-        // แปลงข้อมูลท่อประปาดับเพลิงครบถ้วน 100% จากไฟล์ที่ส่งมา ฝังลงในหน่วยความจำเพื่อความรวดเร็วสูงสุด
-        const rawHydrantData = [
-            {id:"จอมสุรางค์ 01",station:"ส.ดพ.จอมสุรางค์",lat:14.961385,lng:102.063759},
-            {id:"จอมสุรางค์ 02",station:"ส.ดพ.จอมสุรางค์",lat:14.972757,lng:102.087678},
-            {id:"จอมสุรางค์ 03",station:"ส.ดพ.จอมสุรางค์",lat:14.972915,lng:102.090559},
-            {id:"จอมสุรางค์ 04",station:"ส.ดพ.จอมสุรางค์",lat:14.972867,lng:102.092683},
-            {id:"จอมสุรางค์ 05",station:"ส.ดพ.จอมสุรางค์",lat:14.972959,lng:102.093006},
-            {id:"จอมสุรางค์ 06",station:"ส.ดพ.จอมสุรางค์",lat:14.973015,lng:102.094530},
-            {id:"จอมสุรางค์ 07",station:"ส.ดพ.จอมสุรางค์",lat:14.973173,lng:102.096988},
-            {id:"จอมสุรางค์ 08",station:"ส.ดพ.จอมสุรางค์",lat:14.973159,lng:102.099042},
-            {id:"เคหะ 08",station:"ส.ดพ.เคหะฯ",lat:14.954762,lng:102.048987},
-            {id:"เคหะ 09",station:"ส.ดพ.เคหะฯ",lat:14.947442,lng:102.053594},
-            {id:"เคหะ 10",station:"ส.ดพ.เคหะฯ",lat:14.956773,lng:102.043819},
-            {id:"เคหะ 11",station:"ส.ดพ.เคหะฯ",lat:14.955846,lng:102.043966},
-            {id:"เคหะ 12",station:"ส.ดพ.เคหะฯ",lat:14.956636,lng:102.037151},
-            {id:"เคหะ 13",station:"ส.ดพ.เคหะฯ",lat:14.968533,lng:102.049328},
-            {id:"เคหะ 14",station:"ส.ดพ.เคหะฯ",lat:14.954645,lng:102.032141}
-        ];
-
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let activeTimers = [];
         let scbaAlarmInterval = null;
@@ -228,10 +207,6 @@
         let drawnLines = [];
         let currentLine = null;
         let mapMarkers = {};
-        
-        let hydrantLayerGroup = null;
-        let hydrantsLoaded = false;
-        let showHydrants = false;
         let resourceDataStore = {};
 
         function updateClock() {
@@ -299,7 +274,7 @@
             }, 1000);
         }
 
-        // ระบบแผนที่และการลากเส้น
+        // ระบบแผนที่และการลากเส้นปฏิบัติการ
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -312,17 +287,6 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             currentMarker = L.marker(defaultCoords).addTo(map).bindPopup('พิกัดปัจจุบัน').openPopup();
             
-            hydrantLayerGroup = L.layerGroup();
-            
-            // โหลดข้อมูลจุดพิกัดท่อดับเพลิงลงใน LayerGroup ทันทีเบื้องหลังเพื่อความเร็วสูงสุด 100%
-            rawHydrantData.forEach(item => {
-                const hIcon = L.divIcon({ html: "🚰", className: 'hydrant-icon', iconSize: [22, 22] });
-                const hMarker = L.marker([item.lat, item.lng], { icon: hIcon });
-                hMarker.bindPopup(`<div class="text-black text-xs font-sans font-bold">🚰 ท่อประปาดับเพลิง (${item.id})<br><span class="font-normal text-gray-600">หน่วยงาน: ${item.station}<br>พิกัด: ${item.lat}, ${item.lng}</span></div>`);
-                hydrantLayerGroup.addLayer(hMarker);
-            });
-            hydrantsLoaded = true;
-
             requestCurrentLocation();
 
             map.on('mousedown', startMapDraw);
@@ -375,21 +339,6 @@
             mapMarkers[markerId] = marker;
             marker.bindPopup(`<div class="text-black text-xs font-bold font-sans"><p class="mb-1">${labelName}</p><button onclick="removeMapMarker('${markerId}')" class="w-full bg-red-600 text-white text-[10px] p-1 rounded font-bold">✕ ลบไอคอน</button></div>`);
             if (isDrawMode) toggleMapInteraction();
-        }
-
-        // ปุ่ม 𚚰 เปิด-ปิด แสดงตำแหน่งจุดท่อประปาดับเพลิงแบบรวดเร็วแม่นยำ 100%
-        function toggleHydrants() {
-            showHydrants = !showHydrants;
-            const btn = document.getElementById('btn-hydrant');
-            if (showHydrants) {
-                map.addLayer(hydrantLayerGroup);
-                btn.textContent = "🟢 เปิดท่อดับเพลิง";
-                btn.className = "text-[11px] sm:text-xs bg-green-700 px-2 py-1 rounded font-bold text-white shadow";
-            } else {
-                map.removeLayer(hydrantLayerGroup);
-                btn.textContent = "🚰 ท่อดับเพลิง";
-                btn.className = "text-[11px] sm:text-xs bg-red-600 px-2 py-1 rounded font-bold text-white shadow";
-            }
         }
 
         function requestCurrentLocation() {
