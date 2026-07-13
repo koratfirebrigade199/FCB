@@ -16,7 +16,6 @@
         .tactical-icon { background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; border-radius: 8px; text-align: center; font-size: 22px; line-height: 32px; box-shadow: 0 0 8px rgba(0,0,0,0.5); cursor: move; will-change: transform; }
         .tactical-icon:hover { border-color: #ffcc00; }
         
-        /* สไตล์พิเศษเพื่อป้องกันไม่ให้เบราว์เซอร์รีเฟรชหน้าจอเมื่อลากนิ้วลงบน iPad/มือถือ */
         #live-map { touch-action: none; -webkit-user-select: none; user-select: none; }
         
         @keyframes flash-warning { 0%, 100% { background-color: rgba(234, 88, 12, 0.1); border-color: rgba(234, 88, 12, 0.4); } 50% { background-color: rgba(234, 88, 12, 0.7); border-color: #ff8800; color: white; } }
@@ -92,7 +91,8 @@
                     <button onclick="openResourceModal()" class="text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-500">+ เพิ่มหน่วยงาน</button>
                 </div>
                 <div id="resource-list" class="space-y-2 max-h-[300px] lg:max-h-[380px] overflow-y-auto pr-1 flex flex-col">
-                    </div>
+                    <!-- รายชื่อการ์ดหน่วยงานจะจัดเรียงที่นี่ -->
+                </div>
             </div>
 
             <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800">
@@ -110,6 +110,7 @@
         </div>
     </div>
 
+    <!-- SCBA Section -->
     <div class="bg-gray-900 p-3 sm:p-4 rounded-lg shadow border border-gray-800 mt-3 sm:mt-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-2 mb-3 gap-2">
             <h2 class="text-base sm:text-lg font-bold text-red-400">𫫇 SCBA ENTRY CONTROL BOARD</h2>
@@ -136,6 +137,7 @@
         </div>
     </div>
 
+    <!-- Pop-up Modal ทรัพยากร -->
     <div id="resource-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
         <div class="bg-gray-900 border-2 border-blue-500 p-5 rounded-xl max-w-md w-full space-y-4">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
@@ -172,6 +174,7 @@
         </div>
     </div>
 
+    <!-- SOP Checklist Modal -->
     <div id="checklist-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
         <div class="bg-gray-900 border-2 border-yellow-400 p-5 sm:p-6 rounded-xl max-w-md w-full space-y-4">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
@@ -279,7 +282,6 @@
             }, 1000);
         }
 
-        // 🎨 ระบบการวาดรูปแบบ PointerEngine ปลดล็อกทุกหน้าจอสัมผัส (iOS / iPadOS / Android)
         function initMap() {
             delete L.Icon.Default.prototype._getIconUrl;
             L.Icon.Default.mergeOptions({
@@ -289,7 +291,6 @@
             });
             const defaultCoords = [14.9742, 102.0978];
             
-            // ตั้งค่า Map และปิดการหน่วงเวลาดับเบิลแท็บบนมือถือ (tap: false)
             map = L.map('live-map', { 
                 preferCanvas: true,
                 tap: false
@@ -300,16 +301,13 @@
             
             requestCurrentLocation();
 
-            // ดึง Container ของแผนที่เพื่อผูกเข้ากับ Pointer Event โดยตรงไม่ผ่าน Leaflet-Dragging เพื่อบังคับให้วาดติด 100%
             const mapContainer = document.getElementById('live-map');
             
             mapContainer.addEventListener('pointerdown', (e) => {
                 if (!isDrawMode) return;
                 isDrawingNow = true;
-                // ป้องกันเหตุการณ์เริ่มต้น (เช่น การเลื่อนหน้าจอของเบราว์เซอร์)
                 e.preventDefault();
                 
-                // แปลงพิกัดพิกเซลบนหน้าจอสัมผัสของอุปกรณ์ ให้เป็นพิกัดแผนที่ (Latitude/Longitude)
                 const rect = mapContainer.getBoundingClientRect();
                 const containerPoint = L.point(e.clientX - rect.left, e.clientY - rect.top);
                 const latlng = map.containerPointToLatLng(containerPoint);
@@ -323,7 +321,7 @@
                 e.preventDefault();
                 
                 const now = performance.now();
-                if (now - lastDrawTime < 10) return; // เพิ่มประสิทธิภาพความลื่นไหลระดับ 10ms
+                if (now - lastDrawTime < 10) return;
                 lastDrawTime = now;
                 
                 const rect = mapContainer.getBoundingClientRect();
@@ -335,7 +333,6 @@
                 }
             });
 
-            // เมื่อยกนิ้ว, ปากกา หรือยกเมาส์ออก ให้ทำการบันทึกเส้นเข้าอาร์เรย์
             window.addEventListener('pointerup', () => {
                 if (isDrawingNow && currentLine) {
                     drawnLines.push(currentLine);
@@ -350,14 +347,12 @@
             const btn = document.getElementById('btn-mode');
             if (isDrawMode) {
                 btn.textContent = "โหมด: ✍️ วาดเส้น"; btn.className = "text-[11px] sm:text-xs bg-blue-600 px-2 py-1 rounded font-bold sm:ml-2";
-                // ปิดฟังก์ชันแผนที่เดิมเพื่อให้วาดบน Tablet/iPad ได้สมบูรณ์
                 map.dragging.disable();
                 map.touchZoom.disable();
                 map.doubleClickZoom.disable();
                 if (map.scrollWheelZoom) map.scrollWheelZoom.disable();
             } else {
                 btn.textContent = "โหมด: 🗺️ เลื่อนแผนที่"; btn.className = "text-[11px] sm:text-xs bg-gray-700 px-2 py-1 rounded font-bold sm:ml-2";
-                // เปิดระบบเลื่อนซูมปกติ
                 map.dragging.enable();
                 map.touchZoom.enable();
                 map.doubleClickZoom.enable();
@@ -403,7 +398,6 @@
             }
         }
 
-        // ระบบทรัพยากร
         function openResourceModal(existingId = null) {
             document.getElementById('resource-modal').classList.remove('hidden');
             if (existingId && resourceDataStore[existingId]) {
@@ -565,6 +559,7 @@
             stopSCBAAlarmIfNeeded();
         }
 
+        // 🛠️ ส่วนที่แก้ไข: ปรับปรุงฟังก์ชันบันทึกค่าให้รองรับ Input Element ที่ถูกสั่ง Disabled (ปิดใช้งาน)
         function saveAllToGoogleSheet() {
             const rows = document.querySelectorAll('#scba-rows tr');
             if(rows.length === 0) { alert("❌ ไม่มีข้อมูลรายชื่อนักดับเพลิงในตาราง"); return; }
@@ -573,12 +568,20 @@
             rows.forEach(row => {
                 const timeIn = row.querySelector('.time-in').textContent;
                 if(timeIn !== "--:--") {
+                    // ดึงค่าแรงดันจาก input โดยตรง แม้ว่าจะโดนล็อก disabled อยู่ก็ตาม
+                    const pressureValue = row.querySelector('.bar-input').value;
+                    
                     payloadData.push({
-                        pageName: "SCBA_Log", timestamp: timestamp,
-                        incidentName: document.getElementById('incident-name').value, icName: document.getElementById('ic-name').value,
-                        team: row.querySelector('.team-input').value, name: row.querySelector('.name-input').value,
-                        pressure: row.querySelector('.bar-input').value, timeIn: timeIn,
-                        whistleTime: row.querySelector('.whistle-time').textContent, exitTime: row.querySelector('.exit-time').textContent
+                        pageName: "SCBA_Log", 
+                        timestamp: timestamp,
+                        incidentName: document.getElementById('incident-name').value, 
+                        icName: document.getElementById('ic-name').value,
+                        team: row.querySelector('.team-input').value, 
+                        name: row.querySelector('.name-input').value,
+                        pressure: pressureValue, // ส่งค่าตัวแปรแรงดันที่ดึงมาอย่างถูกต้อง
+                        timeIn: timeIn,
+                        whistleTime: row.querySelector('.whistle-time').textContent, 
+                        exitTime: row.querySelector('.exit-time').textContent
                     });
                 }
             });
